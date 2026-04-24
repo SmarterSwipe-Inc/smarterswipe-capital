@@ -6,6 +6,7 @@
  */
 import { Navbar } from "@/components/Navbar";
 import { AnimatedSection } from "@/components/AnimatedSection";
+import { ApplicationForm } from "@/components/ApplicationForm";
 import {
   ArrowRight,
   CheckCircle2,
@@ -495,23 +496,13 @@ export default function Home() {
             </p>
           </AnimatedSection>
 
-          <AnimatedSection className="max-w-2xl mx-auto">
-            <div className="light-card relative overflow-hidden" style={{ padding: "48px" }}>
+          <AnimatedSection className="max-w-3xl mx-auto">
+            <div className="light-card relative overflow-hidden" style={{ padding: "32px 32px 24px" }}>
               {/* Subtle glow */}
               <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-60 h-60 bg-[#2951D5]/5 rounded-full blur-3xl" />
 
-              <div className="relative text-center">
-                <div className="w-16 h-16 rounded-2xl bg-[#f0f4ff] flex items-center justify-center mx-auto mb-6">
-                  <FileText size={28} className="text-[#2951D5]" />
-                </div>
-                <div className="py-16 px-8 border-2 border-dashed border-gray-200 rounded-xl bg-[#f8f9fc]">
-                  <p className="text-[18px] font-semibold text-[#9ca3af]">
-                    [GHL FORM EMBED HERE]
-                  </p>
-                  <p className="text-[14px] text-[#9ca3af] mt-2">
-                    Form integration placeholder
-                  </p>
-                </div>
+              <div className="relative">
+                <ApplicationForm />
               </div>
             </div>
           </AnimatedSection>
