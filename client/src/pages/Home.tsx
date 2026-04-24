@@ -180,7 +180,7 @@ export default function Home() {
             </h2>
           </AnimatedSection>
 
-          <div className="mt-14 grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
             {[
               {
                 icon: <XCircle size={24} className="text-red-400" />,
@@ -251,7 +251,7 @@ export default function Home() {
             </AnimatedSection>
 
             <AnimatedSection delay={150}>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {[
                   { icon: <DollarSign size={28} />, label: "Up to $1M+", sub: "Capital available" },
                   { icon: <Clock size={28} />, label: "24 Hours", sub: "Pre-offer timeline" },
@@ -294,7 +294,7 @@ export default function Home() {
             </p>
           </AnimatedSection>
 
-          <div className="mt-14 grid md:grid-cols-4 gap-6">
+          <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {[
               {
                 num: "01",
@@ -367,7 +367,7 @@ export default function Home() {
             </h2>
           </AnimatedSection>
 
-          <div className="mt-14 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {/* Good Fit */}
             <AnimatedSection>
               <div className="light-card p-8 h-full border-t-4 border-t-[#22c55e]">
@@ -437,7 +437,7 @@ export default function Home() {
             </h2>
           </AnimatedSection>
 
-          <div className="mt-14 grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="mt-14 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <AnimatedSection>
               <div className="light-card p-8 h-full">
                 <div className="w-14 h-14 rounded-2xl bg-[#f0f4ff] flex items-center justify-center mb-6">
@@ -497,7 +497,7 @@ export default function Home() {
           </AnimatedSection>
 
           <AnimatedSection className="max-w-3xl mx-auto">
-            <div className="light-card relative overflow-hidden" style={{ padding: "32px 32px 24px" }}>
+            <div className="light-card relative overflow-hidden" style={{ padding: "clamp(16px, 3vw, 32px) clamp(16px, 3vw, 32px) clamp(16px, 2vw, 24px)" }}>
               {/* Subtle glow */}
               <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-60 h-60 bg-[#2951D5]/5 rounded-full blur-3xl" />
 
@@ -618,7 +618,7 @@ export default function Home() {
       {/* ═══════════ 9. FOOTER ═══════════ */}
       <footer className="bg-white border-t border-gray-100 py-12 md:py-16">
         <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {/* Brand */}
             <div>
               <div className="bg-[#0B1120] inline-block rounded-lg px-3 py-2 mb-4">

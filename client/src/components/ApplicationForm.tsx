@@ -2,6 +2,7 @@
  * ApplicationForm — Multi-step capital application form
  * Based on application.pdf from SmarterSwipe
  * 7 steps with progress stepper, SmarterSwipe brand styling
+ * All inputs are full-width on mobile, 2-col on sm+ where appropriate
  */
 import { useState, useRef } from "react";
 import {
@@ -24,7 +25,6 @@ import { toast } from "sonner";
 
 /* ───── Types ───── */
 interface FormData {
-  // Section 1: Basic Business Info
   legalBusinessName: string;
   dba: string;
   businessStructure: string;
@@ -37,11 +37,9 @@ interface FormData {
   businessEmail: string;
   physicalAddress: string;
   mailingAddress: string;
-  // Section 2: Funding Request
   amountRequested: string;
   purposeOfFunds: string;
   desiredTerm: string;
-  // Section 3: Owner Info
   ownerFullName: string;
   ownerTitle: string;
   ownershipPercent: string;
@@ -50,7 +48,6 @@ interface FormData {
   ownerPhone: string;
   ownerEmail: string;
   ownerAddress: string;
-  // Section 4: Financial & Banking
   bankName: string;
   accountType: string;
   accountNumber: string;
@@ -67,11 +64,9 @@ interface FormData {
   debt3Payment: string;
   hasLiens: string;
   liensExplanation: string;
-  // Section 5: Merchant / Processing
   primaryProcessor: string;
   merchantId: string;
   avgMonthlyProcessing: string;
-  // Section 7: Authorization
   agreeToTerms: boolean;
   signatureName: string;
   signatureTitle: string;
@@ -126,14 +121,18 @@ const initialFormData: FormData = {
 };
 
 const STEPS = [
-  { label: "Business Info", icon: Building2 },
+  { label: "Business", icon: Building2 },
   { label: "Funding", icon: DollarSign },
-  { label: "Owner Info", icon: User },
+  { label: "Owner", icon: User },
   { label: "Banking", icon: Landmark },
   { label: "Processing", icon: CreditCard },
   { label: "Documents", icon: FileUp },
-  { label: "Authorization", icon: ShieldCheck },
+  { label: "Authorize", icon: ShieldCheck },
 ];
+
+/* ───── Shared input height class ───── */
+const INPUT_CLASS =
+  "w-full h-[48px] px-4 rounded-xl border border-gray-200 bg-white text-[14px] text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/20 focus:border-[#2951D5] transition-all";
 
 /* ───── Reusable field components ───── */
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
@@ -161,14 +160,14 @@ function TextInput({
   type?: string;
 }) {
   return (
-    <div>
-      <FieldLabel label={label} required={required} />
+    <div className="w-full">
+      {label && <FieldLabel label={label} required={required} />}
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/20 focus:border-[#2951D5] transition-all"
+        className={INPUT_CLASS}
       />
     </div>
   );
@@ -190,13 +189,13 @@ function SelectInput({
   required?: boolean;
 }) {
   return (
-    <div>
+    <div className="w-full">
       <FieldLabel label={label} required={required} />
       <div className="relative">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] text-[#0B1120] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/20 focus:border-[#2951D5] transition-all appearance-none"
+          className={`${INPUT_CLASS} appearance-none pr-10`}
         >
           <option value="">{placeholder || "Select..."}</option>
           {options.map((opt) => (
@@ -231,7 +230,7 @@ function FileUploadField({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div>
+    <div className="w-full">
       <FieldLabel label={label} required />
       <div
         onClick={() => inputRef.current?.click()}
@@ -279,6 +278,13 @@ function FileUploadField({
   );
 }
 
+/* ───── Two-column row helper: stacks on mobile ───── */
+function Row2({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+  );
+}
+
 /* ═══════════ MAIN FORM COMPONENT ═══════════ */
 export function ApplicationForm() {
   const [step, setStep] = useState(0);
@@ -286,7 +292,6 @@ export function ApplicationForm() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // File state
   const [driversLicense, setDriversLicense] = useState<File[]>([]);
   const [voidedCheck, setVoidedCheck] = useState<File[]>([]);
   const [bankStatements, setBankStatements] = useState<File[]>([]);
@@ -327,7 +332,6 @@ export function ApplicationForm() {
       return;
     }
     setSubmitting(true);
-    // Simulate submission
     setTimeout(() => {
       setSubmitting(false);
       setSubmitted(true);
@@ -337,7 +341,7 @@ export function ApplicationForm() {
 
   if (submitted) {
     return (
-      <div className="text-center py-16 px-8">
+      <div className="text-center py-16 px-4">
         <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
           <CheckCircle2 size={40} className="text-[#22c55e]" />
         </div>
@@ -345,7 +349,8 @@ export function ApplicationForm() {
           Application Submitted
         </h3>
         <p className="text-[16px] text-[#6b7280] max-w-md mx-auto">
-          Thank you! Our team will review your application and reach out within 24 hours with your pre-approval options.
+          Thank you! Our team will review your application and reach out within
+          24 hours with your pre-approval options.
         </p>
       </div>
     );
@@ -354,21 +359,21 @@ export function ApplicationForm() {
   return (
     <div>
       {/* ─── Step indicator ─── */}
-      <div className="flex items-center justify-between mb-8 px-2">
+      <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const isActive = i === step;
           const isComplete = i < step;
           return (
-            <div key={i} className="flex items-center">
+            <div key={i} className="flex items-center shrink-0">
               <button
                 onClick={() => i <= step && setStep(i)}
-                className={`flex flex-col items-center gap-1.5 transition-all ${
+                className={`flex flex-col items-center gap-1 transition-all ${
                   i <= step ? "cursor-pointer" : "cursor-default"
                 }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all ${
                     isActive
                       ? "bg-[#2951D5] text-white shadow-md shadow-[#2951D5]/20"
                       : isComplete
@@ -377,13 +382,13 @@ export function ApplicationForm() {
                   }`}
                 >
                   {isComplete ? (
-                    <CheckCircle2 size={16} />
+                    <CheckCircle2 size={14} />
                   ) : (
-                    <Icon size={16} />
+                    <Icon size={14} />
                   )}
                 </div>
                 <span
-                  className={`text-[10px] font-medium hidden sm:block ${
+                  className={`text-[9px] sm:text-[10px] font-medium whitespace-nowrap ${
                     isActive
                       ? "text-[#2951D5]"
                       : isComplete
@@ -396,7 +401,7 @@ export function ApplicationForm() {
               </button>
               {i < STEPS.length - 1 && (
                 <div
-                  className={`w-4 sm:w-8 lg:w-12 h-0.5 mx-1 rounded-full ${
+                  className={`w-3 sm:w-6 md:w-10 lg:w-12 h-0.5 mx-0.5 sm:mx-1 rounded-full shrink-0 ${
                     i < step ? "bg-[#22c55e]" : "bg-gray-200"
                   }`}
                 />
@@ -407,7 +412,7 @@ export function ApplicationForm() {
       </div>
 
       {/* ─── Step content ─── */}
-      <div className="min-h-[380px]">
+      <div className="min-h-[320px]">
         {/* STEP 0: Basic Business Info */}
         {step === 0 && (
           <div className="space-y-4">
@@ -415,9 +420,10 @@ export function ApplicationForm() {
               Basic Business Information
             </h3>
             <p className="text-[13px] text-[#9ca3af] mb-4">
-              Tell us about your business so we can match you with the right options.
+              Tell us about your business so we can match you with the right
+              options.
             </p>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <Row2>
               <TextInput
                 label="Legal Business Name"
                 value={data.legalBusinessName}
@@ -431,8 +437,8 @@ export function ApplicationForm() {
                 onChange={(v) => update("dba", v)}
                 placeholder="Acme Restaurant"
               />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
+            </Row2>
+            <Row2>
               <SelectInput
                 label="Business Structure"
                 value={data.businessStructure}
@@ -453,8 +459,8 @@ export function ApplicationForm() {
                 placeholder="XX-XXXXXXX"
                 required
               />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
+            </Row2>
+            <Row2>
               <TextInput
                 label="Date Business Started"
                 value={data.dateBusinessStarted}
@@ -468,7 +474,7 @@ export function ApplicationForm() {
                 onChange={(v) => update("yearsInBusiness", v)}
                 placeholder="e.g. 3 years"
               />
-            </div>
+            </Row2>
             <TextInput
               label="Industry / NAICS Code or Description"
               value={data.industry}
@@ -482,7 +488,7 @@ export function ApplicationForm() {
               onChange={(v) => update("website", v)}
               placeholder="https://example.com"
             />
-            <div className="grid sm:grid-cols-2 gap-4">
+            <Row2>
               <TextInput
                 label="Business Phone"
                 value={data.businessPhone}
@@ -499,7 +505,7 @@ export function ApplicationForm() {
                 type="email"
                 required
               />
-            </div>
+            </Row2>
             <TextInput
               label="Physical Address"
               value={data.physicalAddress}
@@ -564,9 +570,11 @@ export function ApplicationForm() {
               Primary Owner / Principal Information
             </h3>
             <p className="text-[13px] text-[#9ca3af] mb-4">
-              Information about the primary business owner. If there are additional owners with 20%+ ownership, please note that in the application.
+              Information about the primary business owner. If there are
+              additional owners with 20%+ ownership, please note that in the
+              application.
             </p>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <Row2>
               <TextInput
                 label="Full Legal Name"
                 value={data.ownerFullName}
@@ -581,8 +589,8 @@ export function ApplicationForm() {
                 placeholder="Owner / CEO"
                 required
               />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
+            </Row2>
+            <Row2>
               <TextInput
                 label="% Ownership"
                 value={data.ownershipPercent}
@@ -597,7 +605,7 @@ export function ApplicationForm() {
                 placeholder="MM/DD/YYYY"
                 required
               />
-            </div>
+            </Row2>
             <TextInput
               label="Social Security Number (SSN)"
               value={data.ownerSsn}
@@ -608,7 +616,7 @@ export function ApplicationForm() {
             <p className="text-[12px] text-[#9ca3af] -mt-2">
               Required for credit review. Your data is encrypted and secure.
             </p>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <Row2>
               <TextInput
                 label="Personal Phone"
                 value={data.ownerPhone}
@@ -625,7 +633,7 @@ export function ApplicationForm() {
                 type="email"
                 required
               />
-            </div>
+            </Row2>
             <TextInput
               label="Home Address"
               value={data.ownerAddress}
@@ -645,7 +653,7 @@ export function ApplicationForm() {
             <p className="text-[13px] text-[#9ca3af] mb-4">
               Your banking details help us verify revenue and process funding.
             </p>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <Row2>
               <TextInput
                 label="Primary Business Bank Name"
                 value={data.bankName}
@@ -660,8 +668,8 @@ export function ApplicationForm() {
                 options={["Checking", "Savings"]}
                 required
               />
-            </div>
-            <div className="grid sm:grid-cols-2 gap-4">
+            </Row2>
+            <Row2>
               <TextInput
                 label="Account Number"
                 value={data.accountNumber}
@@ -676,7 +684,7 @@ export function ApplicationForm() {
                 placeholder="XXXXXXXXX"
                 required
               />
-            </div>
+            </Row2>
             <TextInput
               label="Average Monthly Deposits / Revenue (last 3 months)"
               value={data.avgMonthlyRevenue}
@@ -685,7 +693,7 @@ export function ApplicationForm() {
               required
             />
 
-            {/* Outstanding debts */}
+            {/* Outstanding debts — stacks fully on mobile */}
             <div className="pt-4 border-t border-gray-100">
               <h4 className="text-[14px] font-semibold text-[#0B1120] mb-3">
                 Current Outstanding Business Debts
@@ -694,7 +702,10 @@ export function ApplicationForm() {
                 List up to 3 current debts. Leave blank if none.
               </p>
               {[1, 2, 3].map((n) => (
-                <div key={n} className="grid grid-cols-3 gap-2 mb-2">
+                <div
+                  key={n}
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3"
+                >
                   <TextInput
                     label={n === 1 ? "Creditor" : ""}
                     value={
@@ -799,7 +810,8 @@ export function ApplicationForm() {
               Required Documents
             </h3>
             <p className="text-[13px] text-[#9ca3af] mb-4">
-              Please upload the following documents. Accepted formats: PDF, JPG, PNG.
+              Please upload the following documents. Accepted formats: PDF, JPG,
+              PNG.
             </p>
             <FileUploadField
               label="Driver's License or State ID (Front & Back)"
@@ -841,31 +853,49 @@ export function ApplicationForm() {
               Please review and agree to the following before submitting.
             </p>
 
-            {/* Authorization text */}
-            <div className="bg-[#f8f9fc] rounded-xl p-5 text-[13px] leading-[20px] text-[#6b7280] max-h-48 overflow-y-auto border border-gray-100">
+            <div className="bg-[#f8f9fc] rounded-xl p-4 sm:p-5 text-[13px] leading-[20px] text-[#6b7280] max-h-48 overflow-y-auto border border-gray-100">
               <p className="mb-3">
-                By submitting this application to <strong className="text-[#0B1120]">Smarter Swipe Inc</strong>, the undersigned Applicant(s) certify and agree as follows:
+                By submitting this application to{" "}
+                <strong className="text-[#0B1120]">Smarter Swipe Inc</strong>,
+                the undersigned Applicant(s) certify and agree as follows:
               </p>
               <ul className="space-y-2 list-disc pl-4">
                 <li>
-                  All information and documents provided are true, complete, and accurate. Any false information may result in denial of funding.
+                  All information and documents provided are true, complete, and
+                  accurate. Any false information may result in denial of
+                  funding.
                 </li>
                 <li>
-                  I/We authorize <strong className="text-[#0B1120]">Smarter Swipe Inc</strong> to act as our funding broker and submit this application and all supporting documents to multiple banks, lenders, and funding partners to obtain commercial funding offers.
+                  I/We authorize{" "}
+                  <strong className="text-[#0B1120]">Smarter Swipe Inc</strong>{" "}
+                  to act as our funding broker and submit this application and
+                  all supporting documents to multiple banks, lenders, and
+                  funding partners to obtain commercial funding offers.
                 </li>
                 <li>
-                  I/We authorize <strong className="text-[#0B1120]">Smarter Swipe Inc</strong> and its funding partners to perform a <strong className="text-[#0B1120]">soft credit inquiry</strong> on the business and personal credit of the owner(s). This will not affect my/our credit score.
+                  I/We authorize{" "}
+                  <strong className="text-[#0B1120]">Smarter Swipe Inc</strong>{" "}
+                  and its funding partners to perform a{" "}
+                  <strong className="text-[#0B1120]">
+                    soft credit inquiry
+                  </strong>{" "}
+                  on the business and personal credit of the owner(s). This will
+                  not affect my/our credit score.
                 </li>
                 <li>
-                  I/We authorize Smarter Swipe Inc to verify all information with banks, processors, and other third parties, and to contact me/us regarding this application and any funding offers.
+                  I/We authorize Smarter Swipe Inc to verify all information
+                  with banks, processors, and other third parties, and to
+                  contact me/us regarding this application and any funding
+                  offers.
                 </li>
                 <li>
-                  I/We consent to electronic communications and agree that an electronic signature has the same legal effect as a handwritten signature.
+                  I/We consent to electronic communications and agree that an
+                  electronic signature has the same legal effect as a
+                  handwritten signature.
                 </li>
               </ul>
             </div>
 
-            {/* Checkbox */}
             <label className="flex items-start gap-3 cursor-pointer mt-4">
               <input
                 type="checkbox"
@@ -878,9 +908,8 @@ export function ApplicationForm() {
               </span>
             </label>
 
-            {/* Signature fields */}
             <div className="pt-4 border-t border-gray-100">
-              <div className="grid sm:grid-cols-2 gap-4">
+              <Row2>
                 <TextInput
                   label="Printed Name (as signature)"
                   value={data.signatureName}
@@ -894,7 +923,7 @@ export function ApplicationForm() {
                   onChange={(v) => update("signatureTitle", v)}
                   placeholder="Owner / CEO"
                 />
-              </div>
+              </Row2>
               <p className="text-[12px] text-[#9ca3af] mt-2">
                 Date: {new Date().toLocaleDateString("en-US")}
               </p>
@@ -908,7 +937,7 @@ export function ApplicationForm() {
         {step > 0 ? (
           <button
             onClick={prev}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-medium text-[#6b7280] hover:text-[#0B1120] hover:bg-[#f5f7fa] transition-all"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-[14px] font-medium text-[#6b7280] hover:text-[#0B1120] hover:bg-[#f5f7fa] transition-all"
           >
             <ArrowLeft size={16} />
             Back
@@ -918,7 +947,10 @@ export function ApplicationForm() {
         )}
 
         {step < STEPS.length - 1 ? (
-          <button onClick={next} className="btn-primary !py-3 !px-6 !text-[14px]">
+          <button
+            onClick={next}
+            className="btn-primary !py-3 !px-6 !text-[14px]"
+          >
             Continue
             <ArrowRight size={16} />
           </button>
@@ -926,7 +958,7 @@ export function ApplicationForm() {
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="btn-primary !py-3 !px-8 !text-[14px] disabled:opacity-60"
+            className="btn-primary !py-3 !px-6 sm:!px-8 !text-[14px] disabled:opacity-60"
           >
             {submitting ? (
               <>

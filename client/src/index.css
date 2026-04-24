@@ -144,6 +144,12 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+/* Ensure all sections don't overflow on mobile */
+section, .max-w-\[1280px\] {
+  overflow-x: hidden;
 }
 
 /* ─── SmarterSwipe brand blue accent text ─── */
