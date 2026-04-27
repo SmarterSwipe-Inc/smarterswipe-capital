@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1777315645987,
+      "tag": "0000_empty_romulus",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1777315864400,
+      "tag": "0001_hesitant_steel_serpent",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1777316092932,
+      "tag": "0002_reflective_power_pack",
+      "breakpoints": true
+    }
+  ]
+}

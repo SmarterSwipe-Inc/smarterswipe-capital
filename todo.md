@@ -1,0 +1,11 @@
+
+- [x] Resolve Home.tsx conflict - restore custom landing page after upgrade
+- [x] Create applications table in drizzle/schema.ts for form submissions
+- [x] Add database query helpers in server/db.ts for applications
+- [x] Create tRPC API routes for submitting and listing applications
+- [x] Connect frontend ApplicationForm to backend API
+- [x] Push database schema with pnpm db:push
+- [x] Write vitest tests for the application submission API
+- [x] Add missing form fields to database schema (accountType, debt details, liens, merchantId)
+- [x] Update submit mutation to send all collected form fields
+- [ ] Add file upload endpoint for document attachments (deferred - documents step is UI-only for now)

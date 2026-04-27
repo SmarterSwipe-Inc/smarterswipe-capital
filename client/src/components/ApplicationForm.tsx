@@ -5,6 +5,7 @@
  * All inputs are full-width on mobile, 2-col on sm+ where appropriate
  */
 import { useState, useRef } from "react";
+import { trpc } from "@/lib/trpc";
 import {
   Building2,
   DollarSign,
@@ -322,6 +323,18 @@ export function ApplicationForm() {
     if (step > 0) setStep(step - 1);
   };
 
+  const submitMutation = trpc.application.submit.useMutation({
+    onSuccess: () => {
+      setSubmitting(false);
+      setSubmitted(true);
+      toast.success("Application submitted successfully!");
+    },
+    onError: (err) => {
+      setSubmitting(false);
+      toast.error(err.message || "Failed to submit application. Please try again.");
+    },
+  });
+
   const handleSubmit = () => {
     if (!data.agreeToTerms) {
       toast.error("Please agree to the Authorizations & Certifications");
@@ -332,11 +345,73 @@ export function ApplicationForm() {
       return;
     }
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      setSubmitted(true);
-      toast.success("Application submitted successfully!");
-    }, 2000);
+
+    // Map frontend form fields to the API schema — all fields included
+    submitMutation.mutate({
+      // Step 1: Business Information
+      legalBusinessName: data.legalBusinessName,
+      dba: data.dba,
+      entityType: data.businessStructure,
+      federalTaxId: data.ein,
+      dateEstablished: data.dateBusinessStarted,
+      lengthOfOwnership: data.yearsInBusiness,
+      typeOfBusiness: data.industry,
+      businessWebsite: data.website,
+      businessPhone: data.businessPhone,
+      businessEmail: data.businessEmail,
+      businessAddress: data.physicalAddress,
+      mailingAddress: data.mailingAddress,
+
+      // Step 2: Funding Request
+      amountRequested: data.amountRequested,
+      useOfFunds: data.purposeOfFunds,
+      urgency: data.desiredTerm,
+      existingAdvances: data.debt1Creditor ? "Yes" : "No",
+      existingAdvanceDetails: [data.debt1Creditor, data.debt2Creditor, data.debt3Creditor]
+        .filter(Boolean)
+        .join("; "),
+
+      // Step 3: Owner / Principal
+      ownerFirstName: data.ownerFullName.split(" ")[0] || "",
+      ownerLastName: data.ownerFullName.split(" ").slice(1).join(" ") || "",
+      ownerTitle: data.ownerTitle,
+      ownershipPercentage: data.ownershipPercent,
+      ownerSsn: data.ownerSsn,
+      ownerDob: data.ownerDob,
+      ownerPhone: data.ownerPhone,
+      ownerEmail: data.ownerEmail,
+      ownerHomeAddress: data.ownerAddress,
+
+      // Step 4: Financial & Banking
+      bankName: data.bankName,
+      accountType: data.accountType,
+      accountNumber: data.accountNumber,
+      routingNumber: data.routingNumber,
+      avgMonthlyRevenue: data.avgMonthlyRevenue,
+
+      // Debt / Lien Details
+      debt1Creditor: data.debt1Creditor,
+      debt1Balance: data.debt1Balance,
+      debt1Payment: data.debt1Payment,
+      debt2Creditor: data.debt2Creditor,
+      debt2Balance: data.debt2Balance,
+      debt2Payment: data.debt2Payment,
+      debt3Creditor: data.debt3Creditor,
+      debt3Balance: data.debt3Balance,
+      debt3Payment: data.debt3Payment,
+      hasLiens: data.hasLiens,
+      liensExplanation: data.liensExplanation,
+
+      // Step 5: Merchant / Processing
+      currentProcessor: data.primaryProcessor,
+      merchantId: data.merchantId,
+      monthlyCardVolume: data.avgMonthlyProcessing,
+
+      // Step 7: Authorization
+      authorizedSignerName: data.signatureName,
+      authorizedSignerTitle: data.signatureTitle,
+      consentGiven: data.agreeToTerms ? "true" : "false",
+    });
   };
 
   if (submitted) {
