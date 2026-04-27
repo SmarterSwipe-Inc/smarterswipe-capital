@@ -20,3 +20,11 @@
 - [x] Add admin login link in the footer
 - [x] Restrict admin access to only jonah@, eric@, billy@smarterswipe.com (not all @smarterswipe.com)
 - [x] Make SmarterSwipe logo in navbar scroll to top of page on click
+- [x] Create admin_credentials table with email/password hash
+- [x] Add backend admin login/logout/me tRPC routes with JWT session
+- [x] Build custom admin login page UI (not Manus OAuth)
+- [x] Update admin dashboard to use custom admin auth
+- [x] Write vitest tests for custom admin auth
+- [x] Secure admin setup route (require existing admin session to create new accounts)
+- [x] Fix admin login/dashboard redirects to use useEffect instead of render
+- [x] Add vitest coverage for adminAuth.login success/failure and cookie behavior

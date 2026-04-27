@@ -1,9 +1,10 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, ADMIN_COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, smarterswipeAdminProcedure, router } from "./_core/trpc";
 import { createApplication, listApplications, getApplicationById, updateApplicationStatus } from "./db";
 import { notifyOwner } from "./_core/notification";
+import { validateAdminLogin, signAdminSession, seedAdminAccount, isWhitelistedAdmin } from "./adminAuth";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -15,6 +16,68 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+  }),
+
+  /** Admin authentication — custom email/password, separate from Manus OAuth */
+  adminAuth: router({
+    /** Check current admin session */
+    me: publicProcedure.query(({ ctx }) => {
+      return ctx.adminSession ?? null;
+    }),
+
+    /** Admin login with email + password */
+    login: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(1),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        const result = await validateAdminLogin(input.email, input.password);
+        if (!result.success) {
+          return { success: false as const, error: result.error };
+        }
+
+        const token = await signAdminSession(result.admin);
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(ADMIN_COOKIE_NAME, token, {
+          ...cookieOptions,
+          maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+        });
+
+        return { success: true as const, admin: result.admin };
+      }),
+
+    /** Admin logout — clear the admin session cookie */
+    logout: publicProcedure.mutation(({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(ADMIN_COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return { success: true } as const;
+    }),
+
+    /** Set up an admin account — only existing admins can create new accounts */
+    setup: smarterswipeAdminProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          password: z.string().min(8, "Password must be at least 8 characters"),
+          name: z.string().min(1),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        if (!isWhitelistedAdmin(input.email)) {
+          return { success: false as const, error: "This email is not authorized for admin access." };
+        }
+
+        try {
+          await seedAdminAccount(input.email, input.password, input.name);
+          return { success: true as const };
+        } catch (err) {
+          console.error("[AdminAuth] Setup failed:", err);
+          return { success: false as const, error: "Failed to set up account." };
+        }
+      }),
   }),
 
   application: router({
@@ -110,7 +173,7 @@ export const appRouter = router({
         return { success: true, id };
       }),
 
-    /** Admin: list all applications (restricted to @smarterswipe.com) */
+    /** Admin: list all applications (restricted to admin session) */
     list: smarterswipeAdminProcedure
       .input(
         z.object({
@@ -124,14 +187,14 @@ export const appRouter = router({
         return listApplications(limit, offset);
       }),
 
-    /** Admin: get a single application by ID (restricted to @smarterswipe.com) */
+    /** Admin: get a single application by ID (restricted to admin session) */
     getById: smarterswipeAdminProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return getApplicationById(input.id);
       }),
 
-    /** Admin: update application status (restricted to @smarterswipe.com) */
+    /** Admin: update application status (restricted to admin session) */
     updateStatus: smarterswipeAdminProcedure
       .input(
         z.object({

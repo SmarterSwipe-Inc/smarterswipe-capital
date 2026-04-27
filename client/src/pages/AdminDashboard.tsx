@@ -1,7 +1,7 @@
-import { useAuth } from "@/_core/hooks/useAuth";
+
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
+import { useLocation } from "wouter";
 import {
   ArrowLeft,
   Building2,
@@ -22,7 +22,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 const LOGO_URL = "/manus-storage/smarterswipe_logo_468640f5.png";
 
@@ -46,7 +46,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 /* ─── Unauthorized screen ─── */
-function UnauthorizedScreen({ message, showLogin }: { message: string; showLogin?: boolean }) {
+function UnauthorizedScreen({ message }: { message: string }) {
   return (
     <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center">
       <div className="max-w-md w-full mx-4">
@@ -56,15 +56,9 @@ function UnauthorizedScreen({ message, showLogin }: { message: string; showLogin
           </div>
           <h2 className="text-xl font-semibold text-[#0B1120] mb-2">Access Restricted</h2>
           <p className="text-[15px] text-[#6b7280] mb-6">{message}</p>
-          {showLogin ? (
-            <Button onClick={() => (window.location.href = getLoginUrl())} className="w-full">
-              Sign in with @smarterswipe.com
-            </Button>
-          ) : (
-            <a href="/" className="text-[#2951D5] text-sm font-medium hover:underline">
-              Return to homepage
-            </a>
-          )}
+          <a href="/" className="text-[#2951D5] text-sm font-medium hover:underline">
+            Return to homepage
+          </a>
         </div>
       </div>
     </div>
@@ -517,10 +511,24 @@ function ApplicationsList({ onSelect }: { onSelect: (id: number) => void }) {
 
 /* ─── Main Admin Dashboard ─── */
 export default function AdminDashboard() {
-  const { user, loading, logout } = useAuth();
+  const [, navigate] = useLocation();
+  const { data: adminSession, isLoading: adminLoading } = trpc.adminAuth.me.useQuery();
+  const adminLogout = trpc.adminAuth.logout.useMutation();
   const [selectedAppId, setSelectedAppId] = useState<number | null>(null);
 
-  if (loading) {
+  // Redirect to login if not authenticated (in useEffect, not during render)
+  useEffect(() => {
+    if (!adminLoading && !adminSession) {
+      navigate("/admin/login");
+    }
+  }, [adminLoading, adminSession, navigate]);
+
+  const handleLogout = async () => {
+    await adminLogout.mutateAsync();
+    navigate("/admin/login");
+  };
+
+  if (adminLoading) {
     return (
       <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center">
         <Loader2 className="animate-spin text-[#2951D5]" size={32} />
@@ -528,19 +536,11 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!user) {
-    return <UnauthorizedScreen message="Please sign in with your @smarterswipe.com email to access the admin dashboard." showLogin />;
-  }
-
-  const ADMIN_EMAILS = [
-    "jonah@smarterswipe.com",
-    "eric@smarterswipe.com",
-    "billy@smarterswipe.com",
-  ];
-  const email = user.email?.toLowerCase() ?? "";
-  if (!ADMIN_EMAILS.includes(email)) {
+  if (!adminSession) {
     return (
-      <UnauthorizedScreen message="This dashboard is restricted to authorized SmarterSwipe admins. Please sign in with an authorized email." />
+      <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center">
+        <Loader2 className="animate-spin text-[#2951D5]" size={32} />
+      </div>
     );
   }
 
@@ -562,10 +562,10 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 text-sm text-[#6b7280]">
               <User size={14} />
-              {user.name || user.email}
+              {adminSession.name || adminSession.email}
             </div>
             <button
-              onClick={logout}
+              onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-[#6b7280] hover:text-[#0B1120] hover:bg-[#f5f7fa] transition-colors"
             >
               <LogOut size={14} />

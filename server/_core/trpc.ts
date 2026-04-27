@@ -45,38 +45,24 @@ export const adminProcedure = t.procedure.use(
 );
 
 /**
- * Whitelisted admin emails for SmarterSwipe Capital dashboard.
- */
-const ADMIN_EMAILS = [
-  "jonah@smarterswipe.com",
-  "eric@smarterswipe.com",
-  "billy@smarterswipe.com",
-];
-
-/**
- * Procedure restricted to specific SmarterSwipe admin emails.
- * Only whitelisted users can access admin routes.
+ * Procedure restricted to authenticated admin sessions (custom email/password auth).
+ * Checks the admin_session cookie, not the Manus OAuth session.
  */
 export const smarterswipeAdminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;
 
-    if (!ctx.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
-    }
-
-    const email = ctx.user.email?.toLowerCase() ?? "";
-    if (!ADMIN_EMAILS.includes(email)) {
+    if (!ctx.adminSession) {
       throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "Access restricted to authorized SmarterSwipe admins",
+        code: "UNAUTHORIZED",
+        message: "Admin login required",
       });
     }
 
     return next({
       ctx: {
         ...ctx,
-        user: ctx.user,
+        adminSession: ctx.adminSession,
       },
     });
   }),

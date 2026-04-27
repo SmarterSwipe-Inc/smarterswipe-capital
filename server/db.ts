@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, InsertApplication, applications } from "../drizzle/schema";
+import { InsertUser, users, InsertApplication, applications, adminCredentials, InsertAdminCredential } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -126,4 +126,33 @@ export async function updateApplicationStatus(id: number, status: "new" | "revie
   if (!db) throw new Error("Database not available");
 
   await db.update(applications).set({ status }).where(eq(applications.id, id));
+}
+
+/* ── Admin Credential Queries ── */
+
+export async function getAdminByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db
+    .select()
+    .from(adminCredentials)
+    .where(eq(adminCredentials.email, email.toLowerCase()))
+    .limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function upsertAdminCredential(data: InsertAdminCredential): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.insert(adminCredentials).values({
+    ...data,
+    email: data.email.toLowerCase(),
+  }).onDuplicateKeyUpdate({
+    set: {
+      passwordHash: data.passwordHash,
+      name: data.name,
+    },
+  });
 }
