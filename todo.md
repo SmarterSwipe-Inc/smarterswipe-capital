@@ -19,3 +19,4 @@
 - [x] Add vitest test for non-@smarterswipe.com user rejection
 - [x] Add admin login link in the footer
 - [x] Restrict admin access to only jonah@, eric@, billy@smarterswipe.com (not all @smarterswipe.com)
+- [x] Make SmarterSwipe logo in navbar scroll to top of page on click

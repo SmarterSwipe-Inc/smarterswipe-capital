@@ -35,7 +35,14 @@ export function Navbar() {
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between" style={{ height: "72px" }}>
           {/* Logo */}
-          <a href="https://smarterswipe.com" className="flex items-center shrink-0">
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="flex items-center shrink-0 cursor-pointer"
+          >
             <img
               src={LOGO_URL}
               alt="SmarterSwipe"
