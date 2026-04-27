@@ -335,7 +335,39 @@ export function ApplicationForm() {
     },
   });
 
-  const handleSubmit = () => {
+  // Upload a single file to the server, returns the storage URL
+  const uploadFile = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = (reader.result as string).split(",")[1];
+          const resp = await fetch("/api/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              fileName: file.name,
+              fileData: base64,
+              mimeType: file.type || "application/octet-stream",
+            }),
+          });
+          if (!resp.ok) {
+            const err = await resp.json().catch(() => ({ error: "Upload failed" }));
+            throw new Error(err.error || "Upload failed");
+          }
+          const { url } = await resp.json();
+          resolve(url);
+        } catch (err: any) {
+          reject(err);
+        }
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleSubmit = async () => {
     if (!data.agreeToTerms) {
       toast.error("Please agree to the Authorizations & Certifications");
       return;
@@ -345,6 +377,25 @@ export function ApplicationForm() {
       return;
     }
     setSubmitting(true);
+
+    // Upload all document files first
+    let documentUrls: string[] = [];
+    try {
+      const allFiles = [
+        ...driversLicense,
+        ...voidedCheck,
+        ...bankStatements,
+        ...processingStatements,
+      ];
+      if (allFiles.length > 0) {
+        const uploadPromises = allFiles.map((f) => uploadFile(f));
+        documentUrls = await Promise.all(uploadPromises);
+      }
+    } catch (err: any) {
+      setSubmitting(false);
+      toast.error(err.message || "Failed to upload documents. Please try again.");
+      return;
+    }
 
     // Map frontend form fields to the API schema — all fields included
     submitMutation.mutate({
@@ -411,6 +462,9 @@ export function ApplicationForm() {
       authorizedSignerName: data.signatureName,
       authorizedSignerTitle: data.signatureTitle,
       consentGiven: data.agreeToTerms ? "true" : "false",
+
+      // Document uploads (S3 URLs)
+      documents: documentUrls.length > 0 ? documentUrls : undefined,
     });
   };
 

@@ -8,4 +8,4 @@
 - [x] Write vitest tests for the application submission API
 - [x] Add missing form fields to database schema (accountType, debt details, liens, merchantId)
 - [x] Update submit mutation to send all collected form fields
-- [ ] Add file upload endpoint for document attachments (deferred - documents step is UI-only for now)
+- [x] Add file upload endpoint for document attachments with S3 storage
