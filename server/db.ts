@@ -142,6 +142,16 @@ export async function getAdminByEmail(email: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function updateAdminPasswordHash(email: string, passwordHash: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(adminCredentials)
+    .set({ passwordHash })
+    .where(eq(adminCredentials.email, email.toLowerCase()));
+}
+
 export async function upsertAdminCredential(data: InsertAdminCredential): Promise<void> {
   const db = await getDb();
   if (!db) throw new Error("Database not available");

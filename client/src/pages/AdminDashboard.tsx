@@ -21,6 +21,8 @@ import {
   Shield,
   User,
   XCircle,
+  KeyRound,
+  Check,
 } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 
@@ -515,6 +517,7 @@ export default function AdminDashboard() {
   const { data: adminSession, isLoading: adminLoading } = trpc.adminAuth.me.useQuery();
   const adminLogout = trpc.adminAuth.logout.useMutation();
   const [selectedAppId, setSelectedAppId] = useState<number | null>(null);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   // Redirect to login if not authenticated (in useEffect, not during render)
   useEffect(() => {
@@ -565,6 +568,13 @@ export default function AdminDashboard() {
               {adminSession.name || adminSession.email}
             </div>
             <button
+              onClick={() => setShowChangePassword(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-[#6b7280] hover:text-[#0B1120] hover:bg-[#f5f7fa] transition-colors"
+            >
+              <KeyRound size={14} />
+              <span className="hidden sm:inline">Change Password</span>
+            </button>
+            <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-[#6b7280] hover:text-[#0B1120] hover:bg-[#f5f7fa] transition-colors"
             >
@@ -591,6 +601,184 @@ export default function AdminDashboard() {
           <ApplicationDetail id={selectedAppId} onBack={() => setSelectedAppId(null)} />
         ) : (
           <ApplicationsList onSelect={(id) => setSelectedAppId(id)} />
+        )}
+      </div>
+
+      {/* Change Password Modal */}
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
+      )}
+    </div>
+  );
+}
+
+/* ─── Change Password Modal ─── */
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const changePasswordMutation = trpc.adminAuth.changePassword.useMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters.");
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setError("New password must be different from current password.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await changePasswordMutation.mutateAsync({
+        currentPassword,
+        newPassword,
+      });
+      if (result.success) {
+        setSuccess(true);
+      } else {
+        setError(result.error || "Failed to change password.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+        {success ? (
+          <div className="text-center py-4">
+            <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+              <Check size={28} className="text-green-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-[#0B1120] mb-2">
+              Password Changed
+            </h3>
+            <p className="text-sm text-[#6b7280] mb-6">
+              Your password has been updated successfully.
+            </p>
+            <Button onClick={onClose} className="w-full">
+              Done
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-xl bg-[#f0f4ff] flex items-center justify-center">
+                <KeyRound size={20} className="text-[#2951D5]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#0B1120]">
+                  Change Password
+                </h3>
+                <p className="text-xs text-[#9ca3af]">
+                  Enter your current password and choose a new one
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-[#3a3f4b] mb-1.5">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f9fc] border border-gray-200 rounded-xl text-sm text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/30 focus:border-[#2951D5] transition-all"
+                  placeholder="Enter current password"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#3a3f4b] mb-1.5">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f9fc] border border-gray-200 rounded-xl text-sm text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/30 focus:border-[#2951D5] transition-all"
+                  placeholder="Minimum 8 characters"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-[#3a3f4b] mb-1.5">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  autoComplete="new-password"
+                  className="w-full px-3.5 py-2.5 bg-[#f8f9fc] border border-gray-200 rounded-xl text-sm text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/30 focus:border-[#2951D5] transition-all"
+                  placeholder="Re-enter new password"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex-1 bg-[#2951D5] hover:bg-[#2345b8]"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Password"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </>
         )}
       </div>
     </div>

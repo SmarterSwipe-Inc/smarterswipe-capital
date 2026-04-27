@@ -2,9 +2,10 @@ import { COOKIE_NAME, ADMIN_COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, smarterswipeAdminProcedure, router } from "./_core/trpc";
-import { createApplication, listApplications, getApplicationById, updateApplicationStatus } from "./db";
+import { createApplication, listApplications, getApplicationById, updateApplicationStatus, getAdminByEmail, updateAdminPasswordHash } from "./db";
 import { notifyOwner } from "./_core/notification";
-import { validateAdminLogin, signAdminSession, seedAdminAccount, isWhitelistedAdmin } from "./adminAuth";
+import { validateAdminLogin, signAdminSession, seedAdminAccount, isWhitelistedAdmin, hashPassword } from "./adminAuth";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 export const appRouter = router({
@@ -55,6 +56,36 @@ export const appRouter = router({
       ctx.res.clearCookie(ADMIN_COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+
+    /** Change password — requires current admin session and current password */
+    changePassword: smarterswipeAdminProcedure
+      .input(
+        z.object({
+          currentPassword: z.string().min(1, "Current password is required"),
+          newPassword: z.string().min(8, "New password must be at least 8 characters"),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        const email = ctx.adminSession!.email;
+
+        // Fetch the admin record to verify current password
+        const admin = await getAdminByEmail(email);
+        if (!admin) {
+          return { success: false as const, error: "Admin account not found." };
+        }
+
+        // Verify current password
+        const valid = await bcrypt.compare(input.currentPassword, admin.passwordHash);
+        if (!valid) {
+          return { success: false as const, error: "Current password is incorrect." };
+        }
+
+        // Hash and save new password
+        const newHash = await hashPassword(input.newPassword);
+        await updateAdminPasswordHash(email, newHash);
+
+        return { success: true as const };
+      }),
 
     /** Set up an admin account — only existing admins can create new accounts */
     setup: smarterswipeAdminProcedure

@@ -28,3 +28,6 @@
 - [x] Secure admin setup route (require existing admin session to create new accounts)
 - [x] Fix admin login/dashboard redirects to use useEffect instead of render
 - [x] Add vitest coverage for adminAuth.login success/failure and cookie behavior
+- [x] Add backend changePassword tRPC route (verify current password, update hash)
+- [x] Add Change Password UI modal in admin dashboard
+- [x] Write vitest tests for changePassword endpoint

@@ -11,8 +11,14 @@ vi.mock("./db", () => ({
   upsertUser: vi.fn(),
   getUserByOpenId: vi.fn(),
   getDb: vi.fn(),
-  getAdminByEmail: vi.fn(),
+  getAdminByEmail: vi.fn().mockImplementation(async (email: string) => {
+    if (email === "eric@smarterswipe.com") {
+      return { id: 1, email: "eric@smarterswipe.com", name: "Eric Guzman", passwordHash: "$2a$12$mockhash" };
+    }
+    return undefined;
+  }),
   upsertAdminCredential: vi.fn(),
+  updateAdminPasswordHash: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock the notification module
@@ -39,6 +45,7 @@ vi.mock("./adminAuth", async () => {
     }),
     signAdminSession: vi.fn().mockResolvedValue("mock-admin-token"),
     seedAdminAccount: vi.fn().mockResolvedValue(undefined),
+    hashPassword: vi.fn().mockResolvedValue("$2a$12$newmockhash"),
     isWhitelistedAdmin: (email: string) => {
       const whitelist = ["jonah@smarterswipe.com", "eric@smarterswipe.com", "billy@smarterswipe.com"];
       return whitelist.includes(email.toLowerCase().trim());
@@ -308,5 +315,96 @@ describe("adminAuth.logout", () => {
         maxAge: -1,
       })
     );
+  });
+});
+
+describe("adminAuth.changePassword", () => {
+  it("rejects unauthenticated user", async () => {
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.adminAuth.changePassword({
+        currentPassword: "oldpass",
+        newPassword: "newpass123",
+      })
+    ).rejects.toThrow("Admin login required");
+  });
+
+  it("rejects when current password is wrong", async () => {
+    // bcrypt.compare is called in the route — we need to mock it
+    // Since the route uses bcrypt directly, and our mock getAdminByEmail returns a hash,
+    // bcrypt.compare("wrongpass", "$2a$12$mockhash") will return false
+    const ctx = createAdminSessionContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.adminAuth.changePassword({
+      currentPassword: "wrongpassword",
+      newPassword: "newpassword123",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe("Current password is incorrect.");
+    }
+  });
+
+  it("requires new password to be at least 8 characters", async () => {
+    const ctx = createAdminSessionContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.adminAuth.changePassword({
+        currentPassword: "oldpass",
+        newPassword: "short",
+      })
+    ).rejects.toThrow(); // Zod validation error
+  });
+
+  it("succeeds with correct current password and calls updateAdminPasswordHash", async () => {
+    // Mock getAdminByEmail to return an admin with a known bcrypt hash
+    // We'll use a real bcrypt hash of "correctpassword" so bcrypt.compare works
+    const bcrypt = await import("bcryptjs");
+    const realHash = await bcrypt.hash("correctpassword", 4); // low rounds for speed
+
+    const { getAdminByEmail, updateAdminPasswordHash } = await import("./db");
+    (getAdminByEmail as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      id: 1,
+      email: "eric@smarterswipe.com",
+      name: "Eric Guzman",
+      passwordHash: realHash,
+    });
+
+    const ctx = createAdminSessionContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.adminAuth.changePassword({
+      currentPassword: "correctpassword",
+      newPassword: "newsecurepassword123",
+    });
+
+    expect(result.success).toBe(true);
+    expect(updateAdminPasswordHash).toHaveBeenCalledWith(
+      "eric@smarterswipe.com",
+      "$2a$12$newmockhash"
+    );
+  });
+
+  it("returns error when admin account not found in database", async () => {
+    const { getAdminByEmail } = await import("./db");
+    // Temporarily override to return undefined for this test
+    (getAdminByEmail as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
+
+    const ctx = createAdminSessionContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.adminAuth.changePassword({
+      currentPassword: "anypassword",
+      newPassword: "newpassword123",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error).toBe("Admin account not found.");
+    }
   });
 });
