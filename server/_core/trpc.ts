@@ -43,3 +43,32 @@ export const adminProcedure = t.procedure.use(
     });
   }),
 );
+
+/**
+ * Procedure restricted to @smarterswipe.com email addresses.
+ * Checks both admin role AND email domain.
+ */
+export const smarterswipeAdminProcedure = t.procedure.use(
+  t.middleware(async opts => {
+    const { ctx, next } = opts;
+
+    if (!ctx.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
+    }
+
+    const email = ctx.user.email?.toLowerCase() ?? "";
+    if (!email.endsWith("@smarterswipe.com")) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Access restricted to @smarterswipe.com accounts",
+      });
+    }
+
+    return next({
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+      },
+    });
+  }),
+);

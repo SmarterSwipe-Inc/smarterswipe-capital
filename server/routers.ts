@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, smarterswipeAdminProcedure, router } from "./_core/trpc";
 import { createApplication, listApplications, getApplicationById, updateApplicationStatus } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { z } from "zod";
@@ -110,8 +110,8 @@ export const appRouter = router({
         return { success: true, id };
       }),
 
-    /** Admin: list all applications */
-    list: adminProcedure
+    /** Admin: list all applications (restricted to @smarterswipe.com) */
+    list: smarterswipeAdminProcedure
       .input(
         z.object({
           limit: z.number().min(1).max(100).default(50),
@@ -124,15 +124,15 @@ export const appRouter = router({
         return listApplications(limit, offset);
       }),
 
-    /** Admin: get a single application by ID */
-    getById: adminProcedure
+    /** Admin: get a single application by ID (restricted to @smarterswipe.com) */
+    getById: smarterswipeAdminProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         return getApplicationById(input.id);
       }),
 
-    /** Admin: update application status */
-    updateStatus: adminProcedure
+    /** Admin: update application status (restricted to @smarterswipe.com) */
+    updateStatus: smarterswipeAdminProcedure
       .input(
         z.object({
           id: z.number(),

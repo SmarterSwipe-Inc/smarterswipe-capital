@@ -9,3 +9,11 @@
 - [x] Add missing form fields to database schema (accountType, debt details, liens, merchantId)
 - [x] Update submit mutation to send all collected form fields
 - [x] Add file upload endpoint for document attachments with S3 storage
+- [x] Add email-based admin access control (@smarterswipe.com only)
+- [x] Create admin dashboard page with top header navigation
+- [x] Build applications list page with filtering and status management
+- [x] Build application detail view page
+- [x] Add status update functionality (new → reviewing → approved → funded → declined)
+- [x] Add admin route protection on both frontend and backend
+- [x] Write vitest tests for admin access control (basic)
+- [x] Add vitest test for non-@smarterswipe.com user rejection

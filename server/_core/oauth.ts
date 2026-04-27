@@ -28,12 +28,17 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // Auto-promote @smarterswipe.com users to admin
+      const email = userInfo.email ?? null;
+      const isSmarterSwipeEmail = email?.toLowerCase().endsWith("@smarterswipe.com") ?? false;
+
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
-        email: userInfo.email ?? null,
+        email,
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date(),
+        ...(isSmarterSwipeEmail ? { role: "admin" as const } : {}),
       });
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {

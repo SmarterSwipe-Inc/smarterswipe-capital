@@ -82,6 +82,51 @@ describe("application.submit", () => {
   });
 });
 
+function createNonSmarterswipeUserContext(): TrpcContext {
+  return {
+    user: {
+      id: 2,
+      openId: "regular-user",
+      email: "user@gmail.com",
+      name: "Regular User",
+      loginMethod: "manus",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {
+      clearCookie: vi.fn(),
+    } as unknown as TrpcContext["res"],
+  };
+}
+
+describe("admin access control - non-@smarterswipe.com rejection", () => {
+  it("rejects a signed-in non-@smarterswipe.com user from application.list", async () => {
+    const ctx = createNonSmarterswipeUserContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.application.list()).rejects.toThrow();
+  });
+
+  it("rejects a signed-in non-@smarterswipe.com user from application.getById", async () => {
+    const ctx = createNonSmarterswipeUserContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.application.getById({ id: 1 })).rejects.toThrow();
+  });
+
+  it("rejects a signed-in non-@smarterswipe.com user from application.updateStatus", async () => {
+    const ctx = createNonSmarterswipeUserContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.application.updateStatus({ id: 1, status: "approved" })
+    ).rejects.toThrow();
+  });
+});
+
 describe("application.list", () => {
   it("requires admin role", async () => {
     const ctx = createPublicContext();
