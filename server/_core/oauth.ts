@@ -28,9 +28,14 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
-      // Auto-promote @smarterswipe.com users to admin
+      // Auto-promote whitelisted SmarterSwipe admin emails
+      const ADMIN_EMAILS = [
+        "jonah@smarterswipe.com",
+        "eric@smarterswipe.com",
+        "billy@smarterswipe.com",
+      ];
       const email = userInfo.email ?? null;
-      const isSmarterSwipeEmail = email?.toLowerCase().endsWith("@smarterswipe.com") ?? false;
+      const isSmarterSwipeEmail = email ? ADMIN_EMAILS.includes(email.toLowerCase()) : false;
 
       await db.upsertUser({
         openId: userInfo.openId,

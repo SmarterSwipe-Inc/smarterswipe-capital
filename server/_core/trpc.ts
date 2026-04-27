@@ -45,8 +45,17 @@ export const adminProcedure = t.procedure.use(
 );
 
 /**
- * Procedure restricted to @smarterswipe.com email addresses.
- * Checks both admin role AND email domain.
+ * Whitelisted admin emails for SmarterSwipe Capital dashboard.
+ */
+const ADMIN_EMAILS = [
+  "jonah@smarterswipe.com",
+  "eric@smarterswipe.com",
+  "billy@smarterswipe.com",
+];
+
+/**
+ * Procedure restricted to specific SmarterSwipe admin emails.
+ * Only whitelisted users can access admin routes.
  */
 export const smarterswipeAdminProcedure = t.procedure.use(
   t.middleware(async opts => {
@@ -57,10 +66,10 @@ export const smarterswipeAdminProcedure = t.procedure.use(
     }
 
     const email = ctx.user.email?.toLowerCase() ?? "";
-    if (!email.endsWith("@smarterswipe.com")) {
+    if (!ADMIN_EMAILS.includes(email)) {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "Access restricted to @smarterswipe.com accounts",
+        message: "Access restricted to authorized SmarterSwipe admins",
       });
     }
 

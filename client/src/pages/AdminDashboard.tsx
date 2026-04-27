@@ -532,10 +532,15 @@ export default function AdminDashboard() {
     return <UnauthorizedScreen message="Please sign in with your @smarterswipe.com email to access the admin dashboard." showLogin />;
   }
 
+  const ADMIN_EMAILS = [
+    "jonah@smarterswipe.com",
+    "eric@smarterswipe.com",
+    "billy@smarterswipe.com",
+  ];
   const email = user.email?.toLowerCase() ?? "";
-  if (!email.endsWith("@smarterswipe.com")) {
+  if (!ADMIN_EMAILS.includes(email)) {
     return (
-      <UnauthorizedScreen message="This dashboard is restricted to @smarterswipe.com email addresses. Please sign in with your company email." />
+      <UnauthorizedScreen message="This dashboard is restricted to authorized SmarterSwipe admins. Please sign in with an authorized email." />
     );
   }
 

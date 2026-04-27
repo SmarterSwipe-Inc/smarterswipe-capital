@@ -36,8 +36,8 @@ function createAdminContext(): TrpcContext {
     user: {
       id: 1,
       openId: "admin-user",
-      email: "admin@smarterswipe.com",
-      name: "Admin User",
+      email: "eric@smarterswipe.com",
+      name: "Eric Guzman",
       loginMethod: "manus",
       role: "admin",
       createdAt: new Date(),
@@ -104,6 +104,37 @@ function createNonSmarterswipeUserContext(): TrpcContext {
     } as unknown as TrpcContext["res"],
   };
 }
+
+function createNonWhitelistedSmarterswipeContext(): TrpcContext {
+  return {
+    user: {
+      id: 3,
+      openId: "other-ss-user",
+      email: "random@smarterswipe.com",
+      name: "Random Employee",
+      loginMethod: "manus",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {
+      clearCookie: vi.fn(),
+    } as unknown as TrpcContext["res"],
+  };
+}
+
+describe("admin access control - non-whitelisted @smarterswipe.com rejection", () => {
+  it("rejects a non-whitelisted @smarterswipe.com user from application.list", async () => {
+    const ctx = createNonWhitelistedSmarterswipeContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(caller.application.list()).rejects.toThrow();
+  });
+});
 
 describe("admin access control - non-@smarterswipe.com rejection", () => {
   it("rejects a signed-in non-@smarterswipe.com user from application.list", async () => {

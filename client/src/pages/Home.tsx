@@ -672,6 +672,14 @@ export default function Home() {
                     </li>
                   )
                 )}
+                <li>
+                  <a
+                    href="/admin"
+                    className="text-[14px] text-[#6b7280] hover:text-[#2951D5] transition-colors"
+                  >
+                    Admin Login
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

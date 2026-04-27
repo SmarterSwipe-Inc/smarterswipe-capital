@@ -17,3 +17,5 @@
 - [x] Add admin route protection on both frontend and backend
 - [x] Write vitest tests for admin access control (basic)
 - [x] Add vitest test for non-@smarterswipe.com user rejection
+- [x] Add admin login link in the footer
+- [x] Restrict admin access to only jonah@, eric@, billy@smarterswipe.com (not all @smarterswipe.com)
