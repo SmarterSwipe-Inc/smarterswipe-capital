@@ -4,6 +4,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, smarterswipeAdminProcedure, router } from "./_core/trpc";
 import { createApplication, listApplications, getApplicationById, updateApplicationStatus, getAdminByEmail, updateAdminPasswordHash } from "./db";
 import { notifyOwner } from "./_core/notification";
+import { sendEmail } from "./email";
+import { applicationConfirmationEmail } from "./emailTemplates";
 import { validateAdminLogin, signAdminSession, seedAdminAccount, isWhitelistedAdmin, hashPassword } from "./adminAuth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -194,14 +196,41 @@ export const appRouter = router({
         // Notify the owner about the new application
         const businessName = input.legalBusinessName || input.dba || "Unknown Business";
         const amount = input.amountRequested || "Not specified";
+        const ownerName = [input.ownerFirstName, input.ownerLastName].filter(Boolean).join(" ") || "Applicant";
+        const applicantEmail = input.ownerEmail || input.businessEmail;
+
         await notifyOwner({
           title: `New Funding Application: ${businessName}`,
-          content: `A new capital application has been submitted.\n\nBusiness: ${businessName}\nAmount Requested: ${amount}\nContact: ${input.ownerFirstName || ""} ${input.ownerLastName || ""}\nEmail: ${input.businessEmail || input.ownerEmail || "N/A"}\nPhone: ${input.businessPhone || input.ownerPhone || "N/A"}\n\nView in your dashboard to review.`,
+          content: `A new capital application has been submitted.\n\nBusiness: ${businessName}\nAmount Requested: ${amount}\nContact: ${ownerName}\nEmail: ${applicantEmail || "N/A"}\nPhone: ${input.businessPhone || input.ownerPhone || "N/A"}\n\nView in your dashboard to review.`,
         }).catch((err) => {
           console.error("[Notification] Failed to notify owner:", err);
         });
 
-        return { success: true, id };
+        // Send confirmation email to the applicant (best-effort, does not block submission)
+        let emailSent = false;
+        if (applicantEmail) {
+          try {
+            const { subject, html } = applicationConfirmationEmail({
+              businessName,
+              ownerName,
+              amountRequested: amount,
+            });
+            const emailResult = await sendEmail({
+              to: applicantEmail,
+              subject,
+              html,
+              replyTo: "applications@smarterswipe.com",
+            });
+            emailSent = emailResult.success;
+            if (!emailResult.success) {
+              console.warn(`[Email] Confirmation email failed for ${applicantEmail}: ${emailResult.error}`);
+            }
+          } catch (err) {
+            console.error("[Email] Unexpected error sending confirmation:", err);
+          }
+        }
+
+        return { success: true, id, emailSent };
       }),
 
     /** Admin: list all applications (restricted to admin session) */

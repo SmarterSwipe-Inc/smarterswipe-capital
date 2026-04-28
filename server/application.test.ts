@@ -26,6 +26,19 @@ vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
 }));
 
+// Mock the email module
+vi.mock("./email", () => ({
+  sendEmail: vi.fn().mockResolvedValue({ success: true, id: "mock-email-id" }),
+}));
+
+// Mock the email templates module
+vi.mock("./emailTemplates", () => ({
+  applicationConfirmationEmail: vi.fn().mockReturnValue({
+    subject: "Application Received — Test Business",
+    html: "<html>mock email</html>",
+  }),
+}));
+
 // Mock adminAuth module
 vi.mock("./adminAuth", async () => {
   const actual = await vi.importActual("./adminAuth");
@@ -127,7 +140,7 @@ describe("application.submit", () => {
       consentGiven: "true",
     });
 
-    expect(result).toEqual({ success: true, id: 42 });
+    expect(result).toEqual({ success: true, id: 42, emailSent: true });
   });
 
   it("accepts an empty submission (all fields optional)", async () => {
@@ -137,6 +150,92 @@ describe("application.submit", () => {
     const result = await caller.application.submit({});
     expect(result.success).toBe(true);
     expect(typeof result.id).toBe("number");
+    expect(result.emailSent).toBe(false); // no email provided
+  });
+
+  it("sends confirmation email when ownerEmail is provided", async () => {
+    const { sendEmail } = await import("./email");
+    const { applicationConfirmationEmail } = await import("./emailTemplates");
+    (sendEmail as ReturnType<typeof vi.fn>).mockClear();
+    (applicationConfirmationEmail as ReturnType<typeof vi.fn>).mockClear();
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await caller.application.submit({
+      legalBusinessName: "Pizza Palace LLC",
+      amountRequested: "$75,000",
+      ownerFirstName: "Jane",
+      ownerLastName: "Smith",
+      ownerEmail: "jane@pizzapalace.com",
+    });
+
+    expect(applicationConfirmationEmail).toHaveBeenCalledWith({
+      businessName: "Pizza Palace LLC",
+      ownerName: "Jane Smith",
+      amountRequested: "$75,000",
+    });
+
+    expect(sendEmail).toHaveBeenCalledWith({
+      to: "jane@pizzapalace.com",
+      subject: "Application Received — Test Business",
+      html: "<html>mock email</html>",
+      replyTo: "applications@smarterswipe.com",
+    });
+  });
+
+  it("falls back to businessEmail when ownerEmail is not provided", async () => {
+    const { sendEmail } = await import("./email");
+    (sendEmail as ReturnType<typeof vi.fn>).mockClear();
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await caller.application.submit({
+      legalBusinessName: "Taco Town",
+      businessEmail: "info@tacotown.com",
+    });
+
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "info@tacotown.com",
+      })
+    );
+  });
+
+  it("does not send email when no email is provided", async () => {
+    const { sendEmail } = await import("./email");
+    (sendEmail as ReturnType<typeof vi.fn>).mockClear();
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.application.submit({
+      legalBusinessName: "No Email Corp",
+    });
+
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(result.emailSent).toBe(false);
+  });
+
+  it("still succeeds when email send fails", async () => {
+    const { sendEmail } = await import("./email");
+    (sendEmail as ReturnType<typeof vi.fn>).mockClear();
+    (sendEmail as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      success: false,
+      error: "Resend API error: 500",
+    });
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.application.submit({
+      legalBusinessName: "Fail Email Corp",
+      ownerEmail: "fail@example.com",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.emailSent).toBe(false);
   });
 });
 

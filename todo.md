@@ -31,10 +31,10 @@
 - [x] Add backend changePassword tRPC route (verify current password, update hash)
 - [x] Add Change Password UI modal in admin dashboard
 - [x] Write vitest tests for changePassword endpoint
-- [ ] Set up email sending capability (find available API/service)
-- [ ] Create branded confirmation email template for applicants
-- [ ] Integrate email send into application.submit mutation
-- [ ] Write vitest tests for email confirmation flow
+- [x] Set up email sending capability (Resend API)
+- [x] Create branded confirmation email template for applicants
+- [x] Integrate email send into application.submit mutation
+- [x] Write vitest tests for email confirmation flow
 - [x] BUG: Document upload page kicks users out and clears all form data when uploading files
 - [x] Fix: Persist form data to sessionStorage to survive page reloads
 - [x] Fix: Add accept attribute to file inputs (.pdf,.jpg,.jpeg,.png)
