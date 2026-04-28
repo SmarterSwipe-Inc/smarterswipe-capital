@@ -1,0 +1,24 @@
+Upload Bug Investigation Notes:
+
+1. The upload route (/api/upload) exists and is registered in server index.ts
+2. Express body parser is set to 50mb limit - should be fine
+3. The upload route requires no authentication (no session check)
+4. The file upload uses base64 encoding via FileReader in the browser
+5. The upload route validates: fileName, fileData, mimeType present; size < 15MB base64; allowedTypes: pdf, jpeg, png, webp, gif
+
+KEY ISSUE FOUND: The upload route has NO authentication check, BUT the main.tsx has a global 
+error handler that catches ANY TRPCClientError with "Please login (10001)" message and redirects 
+to login. However, the upload is a plain fetch, not tRPC.
+
+POSSIBLE CAUSES:
+- The fetch to /api/upload could be failing (500 error) and the error handling in uploadFile 
+  catches it but the form state gets reset somehow
+- The file upload could be triggering a page navigation/reload
+- The tRPC query cache could be getting invalidated during upload, causing a re-render that 
+  triggers the auth check redirect
+
+MOST LIKELY: The ApplicationForm component is inside a page that checks auth state. When the 
+upload takes time, if any background tRPC query fires and fails with auth error, the global 
+error handler in main.tsx redirects to login page, wiping all form state.
+
+Need to check: Is ApplicationForm rendered inside a page that has auth-dependent queries?

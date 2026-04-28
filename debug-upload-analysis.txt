@@ -1,0 +1,65 @@
+Document Upload Bug - Root Cause Analysis
+==========================================
+
+ISSUE: Clients report that on the document upload page, when they try to upload 
+documents, it "kicks them out" and removes all their information.
+
+INVESTIGATION FINDINGS:
+
+1. Upload Route (/api/upload):
+   - Accepts JSON with base64-encoded file data
+   - No authentication required (public endpoint)
+   - Has 15MB base64 limit (≈10MB raw)
+   - Only allows: PDF, JPEG, PNG, WebP, GIF
+   - Uses storagePut() to upload to S3
+
+2. Express Body Parser:
+   - Set to 50MB limit - should be fine
+   - Upload route registered BEFORE tRPC middleware - correct order
+
+3. File Input:
+   - Hidden file inputs with NO accept attribute!
+   - This means users can select ANY file type (e.g., .doc, .xlsx, .heic)
+   - If they select an unsupported type, the upload will fail with 400 error
+   
+4. Upload Flow (ApplicationForm.tsx):
+   - Files are stored in React state (useState) as File objects
+   - Files are NOT uploaded until the final submit (handleSubmit)
+   - The upload happens in handleSubmit -> uploadFile() for each file
+   - If upload fails, it shows toast.error and returns (doesn't redirect)
+
+5. Global Error Handler (main.tsx):
+   - Subscribes to QueryCache and MutationCache
+   - On ANY tRPC error with message === UNAUTHED_ERR_MSG, redirects to login
+   - The submit mutation is a tRPC mutation!
+   - BUT the upload itself is a raw fetch to /api/upload, not tRPC
+
+WAIT - KEY INSIGHT:
+The file upload zones DON'T upload immediately. They just store File objects in state.
+The actual upload only happens on final submit. So the "kicked out" behavior can't be
+from the upload endpoint itself when clicking the upload zone.
+
+POSSIBLE ROOT CAUSES:
+A) The file input has NO accept attribute, so users might select files that are too 
+   large or wrong type. But this wouldn't cause a redirect - files are just stored in state.
+
+B) On mobile browsers (especially iOS Safari), clicking a file input can sometimes 
+   cause the page to reload or lose state if the browser needs to free memory.
+
+C) On iOS, when the camera/photo picker opens, the browser may suspend the page. 
+   When it resumes, React state could be lost if the page was unloaded.
+
+D) The file input click might be triggering a page navigation somehow.
+
+E) If the form is inside a <form> element, clicking might trigger a form submission.
+
+MOST LIKELY CAUSE: Mobile browser memory management. When users tap "Click to upload" 
+on mobile, the OS opens the file picker (camera roll, files app). The browser tab may 
+be suspended/killed to free memory. When the user returns with their selected file, 
+the page reloads from scratch, losing all React state.
+
+FIX RECOMMENDATIONS:
+1. Add accept attribute to file inputs: accept=".pdf,.jpg,.jpeg,.png"
+2. Persist form data to localStorage/sessionStorage so it survives page reloads
+3. Upload files immediately when selected (not just on final submit)
+4. Add a beforeunload warning when form has data

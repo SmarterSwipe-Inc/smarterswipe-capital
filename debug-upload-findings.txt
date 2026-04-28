@@ -1,0 +1,31 @@
+Document Upload Bug Investigation - Production Site
+====================================================
+
+I've reached the Documents step on the production site (getapproved.smarterswipe.com).
+The page shows 4 upload zones:
+1. Driver's License or State ID (Front & Back) *
+2. Voided Business Check *
+3. Bank Statements — Most Recent 3 Months *
+4. Processing / Merchant Statements — Most Recent 3 Months *
+
+Each has a "Click to upload or drag & drop" zone.
+The upload zones are div elements (indices 17-20), not file input elements.
+
+The issue reported: When clients try to upload documents, it "kicks them out" and removes all their information.
+
+Possible causes to investigate:
+1. The upload zones use hidden file inputs - clicking the div triggers a hidden <input type="file">
+2. The upload goes to /api/upload endpoint which uses multer
+3. If the upload fails or the response triggers an error, the global error handler in main.tsx
+   might redirect to login (if it interprets the error as UNAUTHED_ERR_MSG)
+4. The form state is stored in React state (useState) - any page navigation/redirect would lose all data
+
+Key code to check:
+- ApplicationForm.tsx: handleFileChange function and how it calls /api/upload
+- The /api/upload route in uploadRoute.ts
+- The global error handler in main.tsx that redirects on UNAUTHED_ERR_MSG
+- Whether the upload endpoint requires authentication (it shouldn't for public form)
+
+CRITICAL FINDING: The upload endpoint at /api/upload might be behind auth middleware
+or the Express body parser might reject large files, causing an error that the
+global tRPC error handler interprets as an auth error, triggering redirect.

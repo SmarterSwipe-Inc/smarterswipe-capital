@@ -3,8 +3,14 @@
  * Based on application.pdf from SmarterSwipe
  * 7 steps with progress stepper, SmarterSwipe brand styling
  * All inputs are full-width on mobile, 2-col on sm+ where appropriate
+ *
+ * Fixes applied:
+ * - Form data persisted to sessionStorage to survive page reloads / mobile tab suspension
+ * - File inputs restricted to .pdf,.jpg,.jpeg,.png via accept attribute
+ * - Files uploaded immediately on selection (not deferred to final submit)
+ * - beforeunload warning when form has data
  */
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import {
   Building2,
@@ -73,6 +79,12 @@ interface FormData {
   signatureTitle: string;
 }
 
+/** Represents a file that has been uploaded to S3 */
+interface UploadedFile {
+  name: string;
+  url: string;
+}
+
 const initialFormData: FormData = {
   legalBusinessName: "",
   dba: "",
@@ -130,6 +142,56 @@ const STEPS = [
   { label: "Documents", icon: FileUp },
   { label: "Authorize", icon: ShieldCheck },
 ];
+
+const STORAGE_KEY_FORM = "ss_app_form_data";
+const STORAGE_KEY_STEP = "ss_app_form_step";
+const STORAGE_KEY_DOCS = "ss_app_uploaded_docs";
+const ACCEPTED_FILE_TYPES = ".pdf,.jpg,.jpeg,.png";
+
+/** Fields that contain sensitive PII — never persisted to sessionStorage */
+const SENSITIVE_FIELDS: (keyof FormData)[] = [
+  "ownerSsn",
+  "accountNumber",
+  "routingNumber",
+];
+
+/* ───── SessionStorage helpers ───── */
+function loadFromSession<T>(key: string, fallback: T): T {
+  try {
+    const raw = sessionStorage.getItem(key);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    /* ignore parse errors */
+  }
+  return fallback;
+}
+
+function saveToSession(key: string, value: unknown) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    /* ignore quota errors */
+  }
+}
+
+/** Strip sensitive fields before persisting form data */
+function sanitizeForStorage(formData: FormData): Partial<FormData> {
+  const copy = { ...formData };
+  for (const field of SENSITIVE_FIELDS) {
+    (copy as any)[field] = "";
+  }
+  return copy;
+}
+
+function clearSession() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY_FORM);
+    sessionStorage.removeItem(STORAGE_KEY_STEP);
+    sessionStorage.removeItem(STORAGE_KEY_DOCS);
+  } catch {
+    /* ignore */
+  }
+}
 
 /* ───── Shared input height class ───── */
 const INPUT_CLASS =
@@ -214,16 +276,18 @@ function SelectInput({
   );
 }
 
-/* ───── File upload component ───── */
+/* ───── File upload component (immediate upload) ───── */
 function FileUploadField({
   label,
-  files,
+  uploadedFiles,
+  uploading,
   onAdd,
   onRemove,
   multiple,
 }: {
   label: string;
-  files: File[];
+  uploadedFiles: UploadedFile[];
+  uploading: boolean;
   onAdd: (files: FileList) => void;
   onRemove: (index: number) => void;
   multiple?: boolean;
@@ -234,14 +298,19 @@ function FileUploadField({
     <div className="w-full">
       <FieldLabel label={label} required />
       <div
-        onClick={() => inputRef.current?.click()}
-        className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center cursor-pointer hover:border-[#2951D5]/30 hover:bg-[#f0f4ff]/30 transition-all"
+        onClick={() => !uploading && inputRef.current?.click()}
+        className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${
+          uploading
+            ? "border-[#2951D5]/30 bg-[#f0f4ff]/30 cursor-wait"
+            : "border-gray-200 cursor-pointer hover:border-[#2951D5]/30 hover:bg-[#f0f4ff]/30"
+        }`}
       >
         <input
           ref={inputRef}
           type="file"
           className="hidden"
           multiple={multiple}
+          accept={ACCEPTED_FILE_TYPES}
           onChange={(e) => {
             if (e.target.files && e.target.files.length > 0) {
               onAdd(e.target.files);
@@ -249,19 +318,34 @@ function FileUploadField({
             }
           }}
         />
-        <Upload size={20} className="mx-auto text-[#9ca3af] mb-1" />
-        <p className="text-[13px] text-[#9ca3af]">
-          Click to upload or drag & drop
-        </p>
+        {uploading ? (
+          <>
+            <Loader2 size={20} className="mx-auto text-[#2951D5] mb-1 animate-spin" />
+            <p className="text-[13px] text-[#2951D5] font-medium">Uploading...</p>
+          </>
+        ) : (
+          <>
+            <Upload size={20} className="mx-auto text-[#9ca3af] mb-1" />
+            <p className="text-[13px] text-[#9ca3af]">
+              Click to upload or drag & drop
+            </p>
+            <p className="text-[11px] text-[#c4c9d4] mt-0.5">
+              PDF, JPG, PNG only (max 10MB)
+            </p>
+          </>
+        )}
       </div>
-      {files.length > 0 && (
+      {uploadedFiles.length > 0 && (
         <div className="mt-2 space-y-1.5">
-          {files.map((f, i) => (
+          {uploadedFiles.map((f, i) => (
             <div
               key={i}
-              className="flex items-center justify-between px-3 py-2 bg-[#f5f7fa] rounded-lg text-[13px]"
+              className="flex items-center justify-between px-3 py-2 bg-[#f0fdf4] rounded-lg text-[13px] border border-green-100"
             >
-              <span className="text-[#3a3f4b] truncate mr-2">{f.name}</span>
+              <div className="flex items-center gap-2 truncate mr-2">
+                <CheckCircle2 size={14} className="text-[#22c55e] shrink-0" />
+                <span className="text-[#3a3f4b] truncate">{f.name}</span>
+              </div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -286,31 +370,146 @@ function Row2({ children }: { children: React.ReactNode }) {
   );
 }
 
+/* ───── Upload helper ───── */
+async function uploadFileToServer(file: File): Promise<{ name: string; url: string }> {
+  return new Promise((resolve, reject) => {
+    // Validate file size client-side (10MB raw)
+    if (file.size > 10 * 1024 * 1024) {
+      reject(new Error(`File "${file.name}" is too large. Maximum size is 10MB.`));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = (reader.result as string).split(",")[1];
+        const resp = await fetch("/api/upload", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            fileName: file.name,
+            fileData: base64,
+            mimeType: file.type || "application/octet-stream",
+          }),
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({ error: "Upload failed" }));
+          throw new Error(err.error || "Upload failed");
+        }
+        const { url } = await resp.json();
+        resolve({ name: file.name, url });
+      } catch (err: any) {
+        reject(err);
+      }
+    };
+    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 /* ═══════════ MAIN FORM COMPONENT ═══════════ */
 export function ApplicationForm() {
-  const [step, setStep] = useState(0);
-  const [data, setData] = useState<FormData>(initialFormData);
+  // Restore form state from sessionStorage on mount
+  const [step, setStep] = useState(() => loadFromSession(STORAGE_KEY_STEP, 0));
+  const [data, setData] = useState<FormData>(() => loadFromSession(STORAGE_KEY_FORM, initialFormData));
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const [driversLicense, setDriversLicense] = useState<File[]>([]);
-  const [voidedCheck, setVoidedCheck] = useState<File[]>([]);
-  const [bankStatements, setBankStatements] = useState<File[]>([]);
-  const [processingStatements, setProcessingStatements] = useState<File[]>([]);
+  // Track uploaded files (already on S3) instead of raw File objects
+  const [driversLicenseDocs, setDriversLicenseDocs] = useState<UploadedFile[]>(
+    () => loadFromSession<UploadedFile[]>(STORAGE_KEY_DOCS, []).filter((d: any) => d._cat === "dl").map(({ _cat, ...rest }: any) => rest)
+  );
+  const [voidedCheckDocs, setVoidedCheckDocs] = useState<UploadedFile[]>(
+    () => loadFromSession<UploadedFile[]>(STORAGE_KEY_DOCS, []).filter((d: any) => d._cat === "vc").map(({ _cat, ...rest }: any) => rest)
+  );
+  const [bankStatementDocs, setBankStatementDocs] = useState<UploadedFile[]>(
+    () => loadFromSession<UploadedFile[]>(STORAGE_KEY_DOCS, []).filter((d: any) => d._cat === "bs").map(({ _cat, ...rest }: any) => rest)
+  );
+  const [processingStatementDocs, setProcessingStatementDocs] = useState<UploadedFile[]>(
+    () => loadFromSession<UploadedFile[]>(STORAGE_KEY_DOCS, []).filter((d: any) => d._cat === "ps").map(({ _cat, ...rest }: any) => rest)
+  );
+
+  // Per-category uploading state
+  const [uploadingDL, setUploadingDL] = useState(false);
+  const [uploadingVC, setUploadingVC] = useState(false);
+  const [uploadingBS, setUploadingBS] = useState(false);
+  const [uploadingPS, setUploadingPS] = useState(false);
+
+  // Track whether any upload is in progress
+  const isAnyUploading = uploadingDL || uploadingVC || uploadingBS || uploadingPS;
+
+  // Persist form data to sessionStorage whenever it changes (excluding sensitive fields)
+  useEffect(() => {
+    saveToSession(STORAGE_KEY_FORM, sanitizeForStorage(data));
+  }, [data]);
+
+  useEffect(() => {
+    saveToSession(STORAGE_KEY_STEP, step);
+  }, [step]);
+
+  // Persist uploaded docs to sessionStorage (with category tags for restoration)
+  useEffect(() => {
+    const allDocs = [
+      ...driversLicenseDocs.map((d) => ({ ...d, _cat: "dl" })),
+      ...voidedCheckDocs.map((d) => ({ ...d, _cat: "vc" })),
+      ...bankStatementDocs.map((d) => ({ ...d, _cat: "bs" })),
+      ...processingStatementDocs.map((d) => ({ ...d, _cat: "ps" })),
+    ];
+    saveToSession(STORAGE_KEY_DOCS, allDocs);
+  }, [driversLicenseDocs, voidedCheckDocs, bankStatementDocs, processingStatementDocs]);
+
+  // beforeunload warning when form has data
+  const hasFormData = useCallback(() => {
+    return Object.entries(data).some(([key, val]) => {
+      if (key === "agreeToTerms") return val === true;
+      return typeof val === "string" && val.trim() !== "";
+    });
+  }, [data]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasFormData() && !submitted) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasFormData, submitted]);
 
   const update = (field: keyof FormData, value: string | boolean) => {
     setData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const addFiles = (
-    setter: React.Dispatch<React.SetStateAction<File[]>>,
-    files: FileList
+  // Immediate upload handler — uploads files to S3 right away
+  const handleImmediateUpload = async (
+    files: FileList,
+    setter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
+    setUploading: React.Dispatch<React.SetStateAction<boolean>>
   ) => {
-    setter((prev) => [...prev, ...Array.from(files)]);
+    setUploading(true);
+    const fileArray = Array.from(files);
+    let successCount = 0;
+
+    for (const file of fileArray) {
+      try {
+        const result = await uploadFileToServer(file);
+        setter((prev) => [...prev, result]);
+        successCount++;
+      } catch (err: any) {
+        toast.error(err.message || `Failed to upload ${file.name}`);
+      }
+    }
+
+    setUploading(false);
+    if (successCount > 0) {
+      toast.success(`${successCount} file${successCount > 1 ? "s" : ""} uploaded successfully`);
+    }
   };
 
-  const removeFile = (
-    setter: React.Dispatch<React.SetStateAction<File[]>>,
+  const removeUploadedFile = (
+    setter: React.Dispatch<React.SetStateAction<UploadedFile[]>>,
     index: number
   ) => {
     setter((prev) => prev.filter((_, i) => i !== index));
@@ -327,6 +526,7 @@ export function ApplicationForm() {
     onSuccess: () => {
       setSubmitting(false);
       setSubmitted(true);
+      clearSession();
       toast.success("Application submitted successfully!");
     },
     onError: (err) => {
@@ -334,38 +534,6 @@ export function ApplicationForm() {
       toast.error(err.message || "Failed to submit application. Please try again.");
     },
   });
-
-  // Upload a single file to the server, returns the storage URL
-  const uploadFile = async (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const base64 = (reader.result as string).split(",")[1];
-          const resp = await fetch("/api/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              fileName: file.name,
-              fileData: base64,
-              mimeType: file.type || "application/octet-stream",
-            }),
-          });
-          if (!resp.ok) {
-            const err = await resp.json().catch(() => ({ error: "Upload failed" }));
-            throw new Error(err.error || "Upload failed");
-          }
-          const { url } = await resp.json();
-          resolve(url);
-        } catch (err: any) {
-          reject(err);
-        }
-      };
-      reader.onerror = () => reject(new Error("Failed to read file"));
-      reader.readAsDataURL(file);
-    });
-  };
 
   const handleSubmit = async () => {
     if (!data.agreeToTerms) {
@@ -378,24 +546,13 @@ export function ApplicationForm() {
     }
     setSubmitting(true);
 
-    // Upload all document files first
-    let documentUrls: string[] = [];
-    try {
-      const allFiles = [
-        ...driversLicense,
-        ...voidedCheck,
-        ...bankStatements,
-        ...processingStatements,
-      ];
-      if (allFiles.length > 0) {
-        const uploadPromises = allFiles.map((f) => uploadFile(f));
-        documentUrls = await Promise.all(uploadPromises);
-      }
-    } catch (err: any) {
-      setSubmitting(false);
-      toast.error(err.message || "Failed to upload documents. Please try again.");
-      return;
-    }
+    // Collect all already-uploaded document URLs
+    const documentUrls = [
+      ...driversLicenseDocs.map((d) => d.url),
+      ...voidedCheckDocs.map((d) => d.url),
+      ...bankStatementDocs.map((d) => d.url),
+      ...processingStatementDocs.map((d) => d.url),
+    ];
 
     // Map frontend form fields to the API schema — all fields included
     submitMutation.mutate({
@@ -463,7 +620,7 @@ export function ApplicationForm() {
       authorizedSignerTitle: data.signatureTitle,
       consentGiven: data.agreeToTerms ? "true" : "false",
 
-      // Document uploads (S3 URLs)
+      // Document uploads (S3 URLs — already uploaded)
       documents: documentUrls.length > 0 ? documentUrls : undefined,
     });
   };
@@ -932,7 +1089,7 @@ export function ApplicationForm() {
           </div>
         )}
 
-        {/* STEP 5: Documents */}
+        {/* STEP 5: Documents — immediate upload */}
         {step === 5 && (
           <div className="space-y-5">
             <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
@@ -940,33 +1097,37 @@ export function ApplicationForm() {
             </h3>
             <p className="text-[13px] text-[#9ca3af] mb-4">
               Please upload the following documents. Accepted formats: PDF, JPG,
-              PNG.
+              PNG. Files are uploaded immediately and saved securely.
             </p>
             <FileUploadField
               label="Driver's License or State ID (Front & Back)"
-              files={driversLicense}
-              onAdd={(files) => addFiles(setDriversLicense, files)}
-              onRemove={(i) => removeFile(setDriversLicense, i)}
+              uploadedFiles={driversLicenseDocs}
+              uploading={uploadingDL}
+              onAdd={(files) => handleImmediateUpload(files, setDriversLicenseDocs, setUploadingDL)}
+              onRemove={(i) => removeUploadedFile(setDriversLicenseDocs, i)}
               multiple
             />
             <FileUploadField
               label="Voided Business Check"
-              files={voidedCheck}
-              onAdd={(files) => addFiles(setVoidedCheck, files)}
-              onRemove={(i) => removeFile(setVoidedCheck, i)}
+              uploadedFiles={voidedCheckDocs}
+              uploading={uploadingVC}
+              onAdd={(files) => handleImmediateUpload(files, setVoidedCheckDocs, setUploadingVC)}
+              onRemove={(i) => removeUploadedFile(setVoidedCheckDocs, i)}
             />
             <FileUploadField
               label="Bank Statements — Most Recent 3 Months"
-              files={bankStatements}
-              onAdd={(files) => addFiles(setBankStatements, files)}
-              onRemove={(i) => removeFile(setBankStatements, i)}
+              uploadedFiles={bankStatementDocs}
+              uploading={uploadingBS}
+              onAdd={(files) => handleImmediateUpload(files, setBankStatementDocs, setUploadingBS)}
+              onRemove={(i) => removeUploadedFile(setBankStatementDocs, i)}
               multiple
             />
             <FileUploadField
               label="Processing / Merchant Statements — Most Recent 3 Months"
-              files={processingStatements}
-              onAdd={(files) => addFiles(setProcessingStatements, files)}
-              onRemove={(i) => removeFile(setProcessingStatements, i)}
+              uploadedFiles={processingStatementDocs}
+              uploading={uploadingPS}
+              onAdd={(files) => handleImmediateUpload(files, setProcessingStatementDocs, setUploadingPS)}
+              onRemove={(i) => removeUploadedFile(setProcessingStatementDocs, i)}
               multiple
             />
           </div>
@@ -985,8 +1146,10 @@ export function ApplicationForm() {
             <div className="bg-[#f8f9fc] rounded-xl p-4 sm:p-5 text-[13px] leading-[20px] text-[#6b7280] max-h-48 overflow-y-auto border border-gray-100">
               <p className="mb-3">
                 By submitting this application to{" "}
-                <strong className="text-[#0B1120]">Smarter Swipe Inc</strong>,
-                the undersigned Applicant(s) certify and agree as follows:
+                <strong className="text-[#0B1120]">
+                  Smarter Swipe Inc
+                </strong>
+                , I/We certify and authorize the following:
               </p>
               <ul className="space-y-2 list-disc pl-4">
                 <li>
@@ -1078,15 +1241,25 @@ export function ApplicationForm() {
         {step < STEPS.length - 1 ? (
           <button
             onClick={next}
-            className="btn-primary !py-3 !px-6 !text-[14px]"
+            disabled={isAnyUploading}
+            className="btn-primary !py-3 !px-6 !text-[14px] disabled:opacity-60"
           >
-            Continue
-            <ArrowRight size={16} />
+            {isAnyUploading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                Continue
+                <ArrowRight size={16} />
+              </>
+            )}
           </button>
         ) : (
           <button
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || isAnyUploading}
             className="btn-primary !py-3 !px-6 sm:!px-8 !text-[14px] disabled:opacity-60"
           >
             {submitting ? (

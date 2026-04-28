@@ -31,3 +31,15 @@
 - [x] Add backend changePassword tRPC route (verify current password, update hash)
 - [x] Add Change Password UI modal in admin dashboard
 - [x] Write vitest tests for changePassword endpoint
+- [ ] Set up email sending capability (find available API/service)
+- [ ] Create branded confirmation email template for applicants
+- [ ] Integrate email send into application.submit mutation
+- [ ] Write vitest tests for email confirmation flow
+- [x] BUG: Document upload page kicks users out and clears all form data when uploading files
+- [x] Fix: Persist form data to sessionStorage to survive page reloads
+- [x] Fix: Add accept attribute to file inputs (.pdf,.jpg,.jpeg,.png)
+- [x] Fix: Upload files immediately when selected (not on final submit)
+- [x] Fix: Add beforeunload warning when form has data
+- [x] Fix: Exclude sensitive fields (SSN, account/routing numbers) from sessionStorage persistence
+- [x] Fix: Disable Continue/Submit buttons while file uploads are in progress
+- [x] Fix: Set event.returnValue in beforeunload handler for cross-browser support
