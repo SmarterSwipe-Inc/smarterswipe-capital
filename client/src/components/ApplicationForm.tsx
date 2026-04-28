@@ -284,6 +284,8 @@ function FileUploadField({
   onAdd,
   onRemove,
   multiple,
+  accept,
+  acceptLabel,
 }: {
   label: string;
   uploadedFiles: UploadedFile[];
@@ -291,6 +293,8 @@ function FileUploadField({
   onAdd: (files: FileList) => void;
   onRemove: (index: number) => void;
   multiple?: boolean;
+  accept?: string;
+  acceptLabel?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -310,7 +314,7 @@ function FileUploadField({
           type="file"
           className="hidden"
           multiple={multiple}
-          accept={ACCEPTED_FILE_TYPES}
+          accept={accept || ACCEPTED_FILE_TYPES}
           onChange={(e) => {
             if (e.target.files && e.target.files.length > 0) {
               onAdd(e.target.files);
@@ -330,7 +334,7 @@ function FileUploadField({
               Click to upload or drag & drop
             </p>
             <p className="text-[11px] text-[#c4c9d4] mt-0.5">
-              PDF, JPG, PNG only (max 10MB)
+              {acceptLabel || "PDF, JPG, PNG only (max 10MB)"}
             </p>
           </>
         )}
@@ -503,6 +507,33 @@ export function ApplicationForm() {
     }
 
     setUploading(false);
+    if (successCount > 0) {
+      toast.success(`${successCount} file${successCount > 1 ? "s" : ""} uploaded successfully`);
+    }
+  };
+
+  const handleBankStatementUpload = async (files: FileList) => {
+    const validFiles: File[] = [];
+    for (const file of Array.from(files)) {
+      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        toast.error(`"${file.name}" rejected — bank statements must be PDF files only.`);
+      } else {
+        validFiles.push(file);
+      }
+    }
+    if (validFiles.length === 0) return;
+    setUploadingBS(true);
+    let successCount = 0;
+    for (const file of validFiles) {
+      try {
+        const result = await uploadFileToServer(file);
+        setBankStatementDocs((prev) => [...prev, result]);
+        successCount++;
+      } catch (err: any) {
+        toast.error(err.message || `Failed to upload ${file.name}`);
+      }
+    }
+    setUploadingBS(false);
     if (successCount > 0) {
       toast.success(`${successCount} file${successCount > 1 ? "s" : ""} uploaded successfully`);
     }
@@ -1118,9 +1149,11 @@ export function ApplicationForm() {
               label="Bank Statements — Most Recent 3 Months"
               uploadedFiles={bankStatementDocs}
               uploading={uploadingBS}
-              onAdd={(files) => handleImmediateUpload(files, setBankStatementDocs, setUploadingBS)}
+              onAdd={(files) => handleBankStatementUpload(files)}
               onRemove={(i) => removeUploadedFile(setBankStatementDocs, i)}
               multiple
+              accept=".pdf,application/pdf"
+              acceptLabel="PDF only (max 10MB)"
             />
             <FileUploadField
               label="Processing / Merchant Statements — Most Recent 3 Months"

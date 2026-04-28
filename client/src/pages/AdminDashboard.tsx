@@ -209,7 +209,7 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
             <DetailRow label="Name" value={`${app.ownerFirstName || ""} ${app.ownerLastName || ""}`.trim()} />
             <DetailRow label="Title" value={app.ownerTitle} />
             <DetailRow label="Ownership %" value={app.ownershipPercentage} />
-            <SsnField value={app.ownerSsn} />
+            <MaskedField label="SSN" value={app.ownerSsn} visibleChars={4} />
             <DetailRow label="Date of Birth" value={app.ownerDob} />
             <DetailRow label="Phone" value={app.ownerPhone} />
             <DetailRow label="Email" value={app.ownerEmail} />
@@ -239,8 +239,8 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
           <div className="space-y-3">
             <DetailRow label="Bank Name" value={app.bankName} />
             <DetailRow label="Account Type" value={app.accountType} />
-            <DetailRow label="Account #" value={app.accountNumber ? "••••" + app.accountNumber.slice(-4) : null} />
-            <DetailRow label="Routing #" value={app.routingNumber} />
+            <MaskedField label="Account #" value={app.accountNumber} visibleChars={4} />
+            <MaskedField label="Routing #" value={app.routingNumber} visibleChars={4} />
             <DetailRow label="Avg Monthly Revenue" value={app.avgMonthlyRevenue} />
             <DetailRow label="Avg Monthly Deposits" value={app.avgMonthlyDeposits} />
           </div>
@@ -326,13 +326,15 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
   );
 }
 
-function SsnField({ value }: { value: string | null | undefined }) {
+function MaskedField({ label, value, visibleChars = 4 }: { label: string; value: string | null | undefined; visibleChars?: number }) {
   const [revealed, setRevealed] = useState(false);
-  const masked = value ? `•••-••-${value.replace(/\D/g, "").slice(-4)}` : null;
+  const masked = value
+    ? "••••" + value.slice(-visibleChars)
+    : null;
 
   return (
     <div className="flex items-start justify-between gap-4 py-1.5 border-b border-gray-50 last:border-0">
-      <span className="text-xs font-medium text-[#9ca3af] uppercase tracking-wide shrink-0">SSN</span>
+      <span className="text-xs font-medium text-[#9ca3af] uppercase tracking-wide shrink-0">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-sm text-[#0B1120] text-right font-mono">
           {!value ? "—" : revealed ? value : masked}
@@ -341,7 +343,7 @@ function SsnField({ value }: { value: string | null | undefined }) {
           <button
             onClick={() => setRevealed(!revealed)}
             className="text-[#9ca3af] hover:text-[#2951D5] transition-colors p-0.5"
-            title={revealed ? "Hide SSN" : "Reveal SSN"}
+            title={revealed ? `Hide ${label}` : `Reveal ${label}`}
           >
             {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>

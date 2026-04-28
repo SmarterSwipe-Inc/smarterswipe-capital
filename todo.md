@@ -44,3 +44,5 @@
 - [x] Fix: Disable Continue/Submit buttons while file uploads are in progress
 - [x] Fix: Set event.returnValue in beforeunload handler for cross-browser support
 - [x] Mask SSN in admin dashboard (show last 4 digits with click-to-reveal)
+- [x] Mask account and routing numbers in admin dashboard (click-to-reveal like SSN)
+- [x] Restrict bank statement uploads to PDF only
