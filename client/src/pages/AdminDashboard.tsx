@@ -11,6 +11,7 @@ import {
   DollarSign,
   Download,
   Eye,
+  EyeOff,
   FileText,
   Loader2,
   LogOut,
@@ -208,7 +209,7 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
             <DetailRow label="Name" value={`${app.ownerFirstName || ""} ${app.ownerLastName || ""}`.trim()} />
             <DetailRow label="Title" value={app.ownerTitle} />
             <DetailRow label="Ownership %" value={app.ownershipPercentage} />
-            <DetailRow label="SSN" value={app.ownerSsn ? "••••" + app.ownerSsn.slice(-4) : null} />
+            <SsnField value={app.ownerSsn} />
             <DetailRow label="Date of Birth" value={app.ownerDob} />
             <DetailRow label="Phone" value={app.ownerPhone} />
             <DetailRow label="Email" value={app.ownerEmail} />
@@ -320,6 +321,31 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
             <DetailRow label="Consent Given" value={app.consentGiven === "true" ? "Yes" : "No"} />
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SsnField({ value }: { value: string | null | undefined }) {
+  const [revealed, setRevealed] = useState(false);
+  const masked = value ? `•••-••-${value.replace(/\D/g, "").slice(-4)}` : null;
+
+  return (
+    <div className="flex items-start justify-between gap-4 py-1.5 border-b border-gray-50 last:border-0">
+      <span className="text-xs font-medium text-[#9ca3af] uppercase tracking-wide shrink-0">SSN</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-[#0B1120] text-right font-mono">
+          {!value ? "—" : revealed ? value : masked}
+        </span>
+        {value && (
+          <button
+            onClick={() => setRevealed(!revealed)}
+            className="text-[#9ca3af] hover:text-[#2951D5] transition-colors p-0.5"
+            title={revealed ? "Hide SSN" : "Reveal SSN"}
+          >
+            {revealed ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+        )}
       </div>
     </div>
   );
