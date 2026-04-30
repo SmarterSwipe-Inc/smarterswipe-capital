@@ -81,7 +81,11 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
     bulletField("Full Legal Name", ownerName);
     bulletField("Title / Position", app.ownerTitle);
     bulletField("% Ownership", app.ownershipPercentage);
-    bulletField("Date of Birth (MM/DD/YYYY)", app.ownerDob);
+    // Format DOB: if raw digits like "05231973", convert to "05/23/1973"
+    const formattedDob = app.ownerDob
+      ? app.ownerDob.replace(/^(\d{2})(\d{2})(\d{4})$/, "$1/$2/$3")
+      : null;
+    bulletField("Date of Birth (MM/DD/YYYY)", formattedDob);
 
     // SSN - full value
     bulletField("Social Security Number (SSN)", app.ownerSsn, "(Required for credit review)");
