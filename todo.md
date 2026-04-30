@@ -53,3 +53,4 @@
 - [x] Fix PDF bullet character rendering as %Î (replace ● with dash)
 - [x] Show full SSN and account/routing numbers in PDF export (no masking)
 - [x] Fix DOB format in PDF export (display as MM/DD/YYYY instead of raw digits like 05231973)
+- [x] Redesign PDF to look like a professional fillable paper form (bordered sections, field boxes, grid layout, formal application style)

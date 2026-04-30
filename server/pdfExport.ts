@@ -1,15 +1,15 @@
 import PDFDocument from "pdfkit";
 
 /**
- * Generates a PDF application form matching the reference format:
- * Clean black-and-white, numbered sections, bullet points, fill-in lines,
- * full authorization text, and signature block.
+ * Generates a professional PDF application form that looks like a fillable paper form.
+ * Features: bordered section boxes, field label/value grid layout, underlined fields,
+ * shaded section headers, and formal signature block.
  */
 export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "LETTER",
-      margins: { top: 50, bottom: 50, left: 72, right: 72 },
+      margins: { top: 40, bottom: 40, left: 50, right: 50 },
     });
 
     const chunks: Buffer[] = [];
@@ -17,226 +17,266 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    const pageWidth = 612 - 72 - 72; // letter width minus margins
-    const bulletX = 72 + 18; // indent for bullet items
+    const LEFT = 50;
+    const RIGHT = 562; // 612 - 50
+    const CONTENT_WIDTH = RIGHT - LEFT; // 512
+    const HALF_WIDTH = CONTENT_WIDTH / 2 - 8; // for two-column fields
+    const MID_X = LEFT + CONTENT_WIDTH / 2 + 8; // start of right column
 
-    // Helper: check if we need a new page
+    // ─── Helpers ───
+
     function checkPageSpace(needed: number) {
-      if (doc.y + needed > 700) {
+      if (doc.y + needed > 720) {
         doc.addPage();
       }
     }
 
-    // Helper: section header (bold, underlined, numbered)
-    function sectionHeader(text: string) {
-      checkPageSpace(60);
-      doc.moveDown(0.8);
-      doc.font("Helvetica-Bold").fontSize(13).fillColor("#000000").text(text, 72);
-      // Underline
-      const textWidth = doc.widthOfString(text);
-      const y = doc.y;
-      doc.moveTo(72, y).lineTo(72 + textWidth, y).lineWidth(0.5).strokeColor("#000000").stroke();
+    // Shaded section header with border
+    function sectionHeader(title: string) {
+      checkPageSpace(40);
       doc.moveDown(0.6);
+      const y = doc.y;
+      // Shaded background bar
+      doc.rect(LEFT, y, CONTENT_WIDTH, 22).fill("#1a2744");
+      // White text on dark background
+      doc.font("Helvetica-Bold").fontSize(11).fillColor("#ffffff");
+      doc.text(title, LEFT + 10, y + 5, { width: CONTENT_WIDTH - 20 });
+      doc.fillColor("#000000");
+      doc.y = y + 28;
     }
 
-    // Helper: bullet field with label and value/blank line
-    function bulletField(label: string, value: string | null | undefined, hint?: string) {
-      checkPageSpace(20);
-      const displayValue = value || "________________";
-      const hintText = hint ? ` ${hint}` : "";
-      doc.font("Helvetica").fontSize(11).fillColor("#000000");
-      doc.text(`-  ${label}: ${displayValue}${hintText}`, bulletX, undefined, {
-        width: pageWidth - 18,
+    // Single field: label on top, value below with underline
+    function field(label: string, value: string | null | undefined, width?: number, x?: number) {
+      const fieldX = x ?? LEFT + 10;
+      const fieldWidth = width ?? CONTENT_WIDTH - 20;
+      checkPageSpace(32);
+      // Label
+      doc.font("Helvetica").fontSize(8).fillColor("#555555");
+      doc.text(label, fieldX, doc.y, { width: fieldWidth });
+      const labelY = doc.y;
+      // Value
+      doc.font("Helvetica").fontSize(10).fillColor("#000000");
+      const displayValue = value || "";
+      doc.text(displayValue, fieldX, labelY, { width: fieldWidth });
+      // Underline
+      const lineY = doc.y + 2;
+      doc.moveTo(fieldX, lineY).lineTo(fieldX + fieldWidth, lineY).lineWidth(0.5).strokeColor("#cccccc").stroke();
+      doc.y = lineY + 8;
+    }
+
+    // Two fields side by side
+    function fieldRow(label1: string, value1: string | null | undefined, label2: string, value2: string | null | undefined) {
+      checkPageSpace(32);
+      const startY = doc.y;
+      // Left field
+      doc.font("Helvetica").fontSize(8).fillColor("#555555");
+      doc.text(label1, LEFT + 10, startY, { width: HALF_WIDTH });
+      doc.font("Helvetica").fontSize(10).fillColor("#000000");
+      doc.text(value1 || "", LEFT + 10, doc.y, { width: HALF_WIDTH });
+      const leftEndY = doc.y + 2;
+      doc.moveTo(LEFT + 10, leftEndY).lineTo(LEFT + 10 + HALF_WIDTH, leftEndY).lineWidth(0.5).strokeColor("#cccccc").stroke();
+
+      // Right field
+      doc.font("Helvetica").fontSize(8).fillColor("#555555");
+      doc.text(label2, MID_X, startY, { width: HALF_WIDTH });
+      doc.font("Helvetica").fontSize(10).fillColor("#000000");
+      doc.text(value2 || "", MID_X, doc.y, { width: HALF_WIDTH });
+      const rightEndY = doc.y + 2;
+      doc.moveTo(MID_X, rightEndY).lineTo(MID_X + HALF_WIDTH, rightEndY).lineWidth(0.5).strokeColor("#cccccc").stroke();
+
+      doc.y = Math.max(leftEndY, rightEndY) + 8;
+    }
+
+    // Three fields in a row
+    function fieldRow3(
+      label1: string, value1: string | null | undefined,
+      label2: string, value2: string | null | undefined,
+      label3: string, value3: string | null | undefined
+    ) {
+      checkPageSpace(32);
+      const startY = doc.y;
+      const thirdWidth = CONTENT_WIDTH / 3 - 12;
+      const x1 = LEFT + 10;
+      const x2 = LEFT + CONTENT_WIDTH / 3 + 4;
+      const x3 = LEFT + (CONTENT_WIDTH * 2) / 3 + 4;
+
+      [
+        { label: label1, value: value1, x: x1 },
+        { label: label2, value: value2, x: x2 },
+        { label: label3, value: value3, x: x3 },
+      ].forEach(({ label, value, x }) => {
+        doc.font("Helvetica").fontSize(8).fillColor("#555555");
+        doc.text(label, x, startY, { width: thirdWidth });
+        doc.font("Helvetica").fontSize(10).fillColor("#000000");
+        doc.text(value || "", x, startY + 10, { width: thirdWidth });
+        const lineY = startY + 22;
+        doc.moveTo(x, lineY).lineTo(x + thirdWidth, lineY).lineWidth(0.5).strokeColor("#cccccc").stroke();
       });
-      doc.moveDown(0.3);
+
+      doc.y = startY + 30;
     }
 
-    // ═══════════ 1. Basic Business Information ═══════════
-    sectionHeader("1. Basic Business Information");
+    // Section border box (draw after content)
+    function sectionBox(startY: number) {
+      const endY = doc.y + 4;
+      doc.rect(LEFT, startY, CONTENT_WIDTH, endY - startY).lineWidth(0.75).strokeColor("#d0d5dd").stroke();
+      doc.y = endY + 2;
+    }
 
-    bulletField("Legal Business Name", app.legalBusinessName);
-    bulletField("DBA (if any)", app.dba);
-    bulletField("Business Structure", app.entityType, "(Sole Prop / LLC / Corporation / Partnership / Other)");
-    bulletField("EIN / Federal Tax ID", app.federalTaxId);
-    bulletField("Date Business Started (MM/YYYY)", app.dateEstablished);
-    bulletField("Years/Months in Business", app.lengthOfOwnership);
-    bulletField("Industry / NAICS Code or Description", app.typeOfBusiness, "(e.g. Restaurant, Retail, E-commerce)");
-    bulletField("Website (if any)", app.businessWebsite);
-    bulletField("Business Phone", app.businessPhone);
-    bulletField("Business Email", app.businessEmail);
-    bulletField("Physical Address", app.businessAddress);
-    bulletField("Mailing Address (if different)", app.mailingAddress);
+    // ─── HEADER ───
+    doc.font("Helvetica-Bold").fontSize(18).fillColor("#1a2744");
+    doc.text("SMARTERSWIPE", LEFT, 40, { align: "center", width: CONTENT_WIDTH });
+    doc.font("Helvetica").fontSize(10).fillColor("#555555");
+    doc.text("Business Funding Application", LEFT, doc.y, { align: "center", width: CONTENT_WIDTH });
+    doc.moveDown(0.3);
 
-    // ═══════════ 2. Funding Request Details ═══════════
-    sectionHeader("2. Funding Request Details");
+    // Application ID and date
+    const appId = app.id ? `#${app.id}` : "";
+    const submitDate = app.submittedAt
+      ? new Date(app.submittedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+      : "";
+    doc.font("Helvetica").fontSize(9).fillColor("#888888");
+    doc.text(`Application ${appId}    |    Submitted: ${submitDate}`, LEFT, doc.y, { align: "center", width: CONTENT_WIDTH });
+    doc.moveDown(0.5);
 
-    bulletField("Amount Requested ($)", app.amountRequested);
-    bulletField("Purpose of Funds", app.useOfFunds, "(e.g. Working Capital, Inventory, Marketing, Equipment, Debt Consolidation)");
-    bulletField("Desired Term or Repayment Preference (if known)", app.urgency);
+    // Horizontal rule
+    doc.moveTo(LEFT, doc.y).lineTo(RIGHT, doc.y).lineWidth(1).strokeColor("#1a2744").stroke();
+    doc.moveDown(0.5);
 
-    // ═══════════ 3. Primary Owner / Principal Information ═══════════
-    sectionHeader("3. Primary Owner / Principal Information");
+    // ═══════════ 1. BASIC BUSINESS INFORMATION ═══════════
+    sectionHeader("1. BASIC BUSINESS INFORMATION");
+    const sec1Start = doc.y;
+
+    field("Legal Business Name", app.legalBusinessName);
+    fieldRow("DBA (Doing Business As)", app.dba, "Business Structure", app.entityType);
+    fieldRow("EIN / Federal Tax ID", app.federalTaxId, "Date Business Started", app.dateEstablished);
+    fieldRow("Years/Months in Business", app.lengthOfOwnership, "Industry / NAICS Code", app.typeOfBusiness);
+    fieldRow("Business Phone", app.businessPhone, "Business Email", app.businessEmail);
+    field("Website", app.businessWebsite);
+    field("Physical Address", app.businessAddress);
+    field("Mailing Address (if different)", app.mailingAddress);
+
+    sectionBox(sec1Start);
+
+    // ═══════════ 2. FUNDING REQUEST ═══════════
+    sectionHeader("2. FUNDING REQUEST DETAILS");
+    const sec2Start = doc.y;
+
+    fieldRow("Amount Requested", app.amountRequested ? `$${app.amountRequested.replace(/^\$/, "")}` : null, "Purpose of Funds", app.useOfFunds);
+    field("Desired Term / Repayment Preference", app.urgency);
+
+    sectionBox(sec2Start);
+
+    // ═══════════ 3. OWNER / PRINCIPAL INFORMATION ═══════════
+    sectionHeader("3. PRIMARY OWNER / PRINCIPAL INFORMATION");
+    const sec3Start = doc.y;
 
     const ownerName = [app.ownerFirstName, app.ownerLastName].filter(Boolean).join(" ") || null;
-    bulletField("Full Legal Name", ownerName);
-    bulletField("Title / Position", app.ownerTitle);
-    bulletField("% Ownership", app.ownershipPercentage);
-    // Format DOB: if raw digits like "05231973", convert to "05/23/1973"
+    fieldRow("Full Legal Name", ownerName, "Title / Position", app.ownerTitle);
+
+    // Format DOB
     const formattedDob = app.ownerDob
       ? app.ownerDob.replace(/^(\d{2})(\d{2})(\d{4})$/, "$1/$2/$3")
       : null;
-    bulletField("Date of Birth (MM/DD/YYYY)", formattedDob);
+    fieldRow3("Date of Birth", formattedDob, "% Ownership", app.ownershipPercentage, "SSN", app.ownerSsn);
 
-    // SSN - full value
-    bulletField("Social Security Number (SSN)", app.ownerSsn, "(Required for credit review)");
+    fieldRow("Personal Phone", app.ownerPhone, "Personal Email", app.ownerEmail);
+    field("Home Address", app.ownerHomeAddress);
 
-    bulletField("Personal Phone", app.ownerPhone);
-    bulletField("Personal Email", app.ownerEmail);
-    bulletField("Home Address", app.ownerHomeAddress);
-
-    checkPageSpace(30);
-    doc.moveDown(0.3);
-    doc
-      .font("Helvetica-Oblique")
-      .fontSize(10)
-      .fillColor("#000000")
-      .text(
-        "(If there are additional owners with 20%+ ownership, please provide the same information on a separate sheet.)",
-        72,
-        undefined,
-        { width: pageWidth }
-      );
+    checkPageSpace(20);
+    doc.font("Helvetica-Oblique").fontSize(8).fillColor("#888888");
+    doc.text("If there are additional owners with 20%+ ownership, provide the same information on a separate sheet.", LEFT + 10, doc.y, { width: CONTENT_WIDTH - 20 });
     doc.moveDown(0.3);
 
-    // ═══════════ 4. Financial & Banking Information ═══════════
-    sectionHeader("4. Financial & Banking Information");
+    sectionBox(sec3Start);
 
-    bulletField("Primary Business Bank Name", app.bankName);
-    bulletField("Account Type", app.accountType, "(Checking / Savings)");
+    // ═══════════ 4. FINANCIAL & BANKING INFORMATION ═══════════
+    sectionHeader("4. FINANCIAL & BANKING INFORMATION");
+    const sec4Start = doc.y;
 
-    // Account number - full value
-    bulletField("Account Number", app.accountNumber);
+    fieldRow("Primary Business Bank", app.bankName, "Account Type", app.accountType);
+    fieldRow("Account Number", app.accountNumber, "Routing Number", app.routingNumber);
+    field("Average Monthly Revenue (last 3 months)", app.avgMonthlyRevenue ? `$${app.avgMonthlyRevenue.replace(/^\$/, "")}` : null);
 
-    // Routing number - full value
-    bulletField("Routing Number", app.routingNumber);
-
-    bulletField("Average Monthly Deposits / Revenue (last 3 months)", app.avgMonthlyRevenue ? `$${app.avgMonthlyRevenue.replace(/^\$/, "")}` : null);
-
-    // Current Outstanding Business Debts
+    // Outstanding debts table
     checkPageSpace(80);
-    doc.moveDown(0.5);
-    doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000").text("Current Outstanding Business Debts (list all):", 72);
     doc.moveDown(0.3);
-    doc.font("Helvetica").fontSize(11).text("Creditor | Balance | Monthly Payment", 72);
+    doc.font("Helvetica-Bold").fontSize(9).fillColor("#1a2744");
+    doc.text("CURRENT OUTSTANDING BUSINESS DEBTS", LEFT + 10, doc.y, { width: CONTENT_WIDTH - 20 });
     doc.moveDown(0.3);
 
-    // Debt rows
+    // Table header
+    const tableY = doc.y;
+    const col1 = LEFT + 10;
+    const col2 = LEFT + 200;
+    const col3 = LEFT + 330;
+    doc.rect(col1, tableY, CONTENT_WIDTH - 20, 16).fill("#f0f2f5");
+    doc.font("Helvetica-Bold").fontSize(8).fillColor("#333333");
+    doc.text("Creditor", col1 + 4, tableY + 4);
+    doc.text("Balance", col2 + 4, tableY + 4);
+    doc.text("Monthly Payment", col3 + 4, tableY + 4);
+    doc.y = tableY + 18;
+
     const debts = [
       { creditor: app.debt1Creditor, balance: app.debt1Balance, payment: app.debt1Payment },
       { creditor: app.debt2Creditor, balance: app.debt2Balance, payment: app.debt2Payment },
       { creditor: app.debt3Creditor, balance: app.debt3Balance, payment: app.debt3Payment },
     ];
 
-    debts.forEach((debt, i) => {
-      const creditor = debt.creditor || "________________";
-      const balance = debt.balance || "$________";
-      const payment = debt.payment || "$________";
-      doc.font("Helvetica").fontSize(11).text(`${i + 1}.  ${creditor} | ${balance} | ${payment}`, bulletX);
-      doc.moveDown(0.2);
+    debts.forEach((debt) => {
+      const rowY = doc.y;
+      doc.font("Helvetica").fontSize(9).fillColor("#000000");
+      doc.text(debt.creditor || "-", col1 + 4, rowY + 2, { width: 180 });
+      doc.text(debt.balance || "-", col2 + 4, rowY + 2, { width: 120 });
+      doc.text(debt.payment || "-", col3 + 4, rowY + 2, { width: 120 });
+      doc.y = rowY + 16;
+      // Row separator
+      doc.moveTo(col1, doc.y).lineTo(LEFT + CONTENT_WIDTH - 10, doc.y).lineWidth(0.3).strokeColor("#e0e0e0").stroke();
     });
 
-    doc.moveDown(0.3);
-    const liensChecked = app.hasLiens === "Yes" ? "Yes" : app.hasLiens === "No" ? "No" : "☐ No ☐ Yes";
-    doc
-      .font("Helvetica")
-      .fontSize(11)
-      .text(
-        `-  Any liens, judgments, or bankruptcies (business or personal)? ${liensChecked} - Please explain:`,
-        bulletX,
-        undefined,
-        { width: pageWidth - 18 }
-      );
-    if (app.liensExplanation) {
-      doc.text(`     ${app.liensExplanation}`, bulletX);
-    } else {
-      doc.text("     ________________________________", bulletX);
-    }
-    doc.moveDown(0.3);
-
-    // ═══════════ 5. Merchant / Processing Information ═══════════
-    sectionHeader("5. Merchant / Processing Information");
-
-    bulletField("Primary Processor (Square, Stripe, Chase, etc.)", app.currentProcessor);
-    bulletField("Merchant ID (MID) if known", app.merchantId);
-    bulletField("Average Monthly Credit Card / Processing Volume", app.monthlyCardVolume ? `$${app.monthlyCardVolume.replace(/^\$/, "")}` : null);
-
-    // ═══════════ 6. Required Documents ═══════════
-    checkPageSpace(120);
-    doc.moveDown(0.8);
-    doc.font("Helvetica-Bold").fontSize(13).fillColor("#000000").text("6. Required Documents", 72);
-    // Underline
-    const docHeaderWidth = doc.widthOfString("6. Required Documents");
-    const docHeaderY = doc.y;
-    doc.moveTo(72, docHeaderY).lineTo(72 + docHeaderWidth, docHeaderY).lineWidth(0.5).strokeColor("#000000").stroke();
     doc.moveDown(0.4);
-    doc.font("Helvetica").fontSize(11).text("Please attach the following files:", 72);
-    doc.moveDown(0.3);
+    fieldRow("Liens, Judgments, or Bankruptcies?", app.hasLiens || "No", "Explanation", app.liensExplanation);
+
+    sectionBox(sec4Start);
+
+    // ═══════════ 5. MERCHANT / PROCESSING INFORMATION ═══════════
+    sectionHeader("5. MERCHANT / PROCESSING INFORMATION");
+    const sec5Start = doc.y;
+
+    fieldRow("Primary Processor", app.currentProcessor, "Merchant ID (MID)", app.merchantId);
+    field("Average Monthly Processing Volume", app.monthlyCardVolume ? `$${app.monthlyCardVolume.replace(/^\$/, "")}` : null);
+
+    sectionBox(sec5Start);
+
+    // ═══════════ 6. REQUIRED DOCUMENTS ═══════════
+    sectionHeader("6. REQUIRED DOCUMENTS CHECKLIST");
+    const sec6Start = doc.y;
 
     const requiredDocs = [
       "Driver's License or State ID (Front & Back)",
       "Voided Business Check",
-      "Bank Statements – Most Recent 3 Months • Bank Statement – Month 1 (Most Recent) • Bank Statement – Month 2 • Bank Statement – Month 3",
-      "Processing / Merchant Statements – Most Recent 3 Months • Processing Statement – Month 1 (Most Recent) • Processing Statement – Month 2 • Processing Statement – Month 3",
+      "Bank Statements - Most Recent 3 Months",
+      "Processing / Merchant Statements - Most Recent 3 Months",
     ];
 
     requiredDocs.forEach((docItem) => {
-      checkPageSpace(30);
-      doc.font("Helvetica").fontSize(11).text(`-  ${docItem}`, bulletX, undefined, { width: pageWidth - 18 });
+      checkPageSpace(18);
+      doc.font("Helvetica").fontSize(10).fillColor("#000000");
+      doc.text(`[ ]  ${docItem}`, LEFT + 10, doc.y, { width: CONTENT_WIDTH - 20 });
       doc.moveDown(0.3);
     });
 
-    // ═══════════ 7. Authorizations & Certifications ═══════════
-    checkPageSpace(100);
-    sectionHeader("7. Authorizations & Certifications");
+    sectionBox(sec6Start);
 
-    doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000").text("7. Consent & Authorizations", 72);
-    doc.moveDown(0.4);
+    // ═══════════ 7. AUTHORIZATIONS & CERTIFICATIONS ═══════════
+    sectionHeader("7. AUTHORIZATIONS & CERTIFICATIONS");
+    const sec7Start = doc.y;
 
-    doc
-      .font("Helvetica")
-      .fontSize(11)
-      .text("By clicking the checkbox below and submitting this application, you agree to the following:", 72, undefined, {
-        width: pageWidth,
-      });
-    doc.moveDown(0.4);
-
-    const consentChecked = app.consentGiven === "true" ? "☑" : "☐";
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(11)
-      .text(`${consentChecked} I have read and agree to the Authorizations & Certifications`, 72, undefined, {
-        width: pageWidth,
-      });
-    doc.moveDown(0.4);
-
-    doc.moveDown(0.5);
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(11)
-      .text("Full Authorizations & Certifications:", 72, undefined, {
-        width: pageWidth,
-      });
-    doc.moveDown(0.4);
-
-    doc
-      .font("Helvetica")
-      .fontSize(10)
-      .text(
-        "By submitting this application to Smarter Swipe Inc, the undersigned Applicant(s) certify and agree as follows:",
-        72 + 36,
-        undefined,
-        { width: pageWidth - 36 }
-      );
+    doc.font("Helvetica").fontSize(9).fillColor("#000000");
+    doc.text(
+      "By signing below, the undersigned Applicant(s) certify and agree as follows:",
+      LEFT + 10, doc.y, { width: CONTENT_WIDTH - 20 }
+    );
     doc.moveDown(0.4);
 
     const authItems = [
@@ -247,33 +287,59 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
       "I/We consent to electronic communications and agree that an electronic signature has the same legal effect as a handwritten signature.",
     ];
 
-    authItems.forEach((item) => {
-      checkPageSpace(50);
-      doc.font("Helvetica").fontSize(10).text(`-  ${item}`, 72 + 36, undefined, { width: pageWidth - 36 });
-      doc.moveDown(0.4);
+    authItems.forEach((item, i) => {
+      checkPageSpace(30);
+      doc.font("Helvetica").fontSize(9).fillColor("#333333");
+      doc.text(`${i + 1}.  ${item}`, LEFT + 16, doc.y, { width: CONTENT_WIDTH - 32 });
+      doc.moveDown(0.3);
     });
 
-    // Signature block
-    checkPageSpace(80);
-    doc.moveDown(0.8);
-
-    const signerName = app.authorizedSignerName || "________________________________";
-    const signerTitle = app.authorizedSignerTitle || "________________";
-    const submitDate = app.submittedAt
-      ? new Date(app.submittedAt).toLocaleDateString("en-US")
-      : "________________";
-
-    doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000");
-    doc.text("Signature: ________________________________", 72, undefined, { continued: false });
-    doc.moveDown(0.1);
-    doc.text(`          Date: ${submitDate}`, 72 + 300, undefined, { continued: false });
+    // Consent checkbox
+    doc.moveDown(0.3);
+    const consentChecked = app.consentGiven === "true" ? "[X]" : "[ ]";
+    doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
+    doc.text(`${consentChecked}  I have read and agree to the Authorizations & Certifications above.`, LEFT + 10, doc.y, { width: CONTENT_WIDTH - 20 });
     doc.moveDown(0.6);
 
-    // Reset position for printed name line
-    doc.font("Helvetica-Bold").fontSize(11);
-    doc.text(`Printed Name: ${signerName}`, 72, undefined, { continued: false });
-    doc.moveDown(0.1);
-    doc.text(`          Title: ${signerTitle}`, 72 + 300, undefined, { continued: false });
+    // Signature block
+    checkPageSpace(60);
+    const sigY = doc.y;
+
+    // Signature line
+    doc.moveTo(LEFT + 10, sigY + 20).lineTo(LEFT + 240, sigY + 20).lineWidth(0.75).strokeColor("#000000").stroke();
+    doc.font("Helvetica").fontSize(8).fillColor("#555555");
+    doc.text("Signature", LEFT + 10, sigY + 22);
+
+    // Date line
+    doc.moveTo(LEFT + 280, sigY + 20).lineTo(RIGHT - 10, sigY + 20).lineWidth(0.75).strokeColor("#000000").stroke();
+    doc.text("Date", LEFT + 280, sigY + 22);
+
+    doc.y = sigY + 40;
+
+    // Printed name line
+    const nameY = doc.y;
+    const signerName = app.authorizedSignerName || ownerName || "";
+    const signerTitle = app.authorizedSignerTitle || app.ownerTitle || "";
+
+    doc.font("Helvetica").fontSize(10).fillColor("#000000");
+    doc.text(signerName, LEFT + 10, nameY + 6);
+    doc.moveTo(LEFT + 10, nameY + 20).lineTo(LEFT + 240, nameY + 20).lineWidth(0.75).strokeColor("#000000").stroke();
+    doc.font("Helvetica").fontSize(8).fillColor("#555555");
+    doc.text("Printed Name", LEFT + 10, nameY + 22);
+
+    doc.font("Helvetica").fontSize(10).fillColor("#000000");
+    doc.text(signerTitle, LEFT + 280, nameY + 6);
+    doc.moveTo(LEFT + 280, nameY + 20).lineTo(RIGHT - 10, nameY + 20).lineWidth(0.75).strokeColor("#000000").stroke();
+    doc.font("Helvetica").fontSize(8).fillColor("#555555");
+    doc.text("Title", LEFT + 280, nameY + 22);
+
+    doc.y = nameY + 38;
+    sectionBox(sec7Start);
+
+    // Footer
+    doc.moveDown(0.5);
+    doc.font("Helvetica").fontSize(8).fillColor("#aaaaaa");
+    doc.text("SmarterSwipe Inc. | Business Funding Application | Confidential", LEFT, doc.y, { align: "center", width: CONTENT_WIDTH });
 
     doc.end();
   });
