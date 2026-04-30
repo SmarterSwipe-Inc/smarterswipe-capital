@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 describe("Resend API key validation", () => {
-  it("should be able to authenticate with Resend API", async () => {
+  it("should be able to authenticate with Resend API", { timeout: 15000 }, async () => {
     const apiKey = process.env.RESEND_API_KEY;
     expect(apiKey).toBeTruthy();
 

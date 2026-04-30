@@ -139,6 +139,14 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
                 {STATUS_CONFIG[s]?.label || s}
               </button>
             ))}
+            <a
+              href={`/api/admin/applications/${app.id}/pdf`}
+              download
+              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-[#0B1120] text-white hover:bg-[#1a2540] transition-all flex items-center gap-1.5 ml-2"
+            >
+              <Download size={13} />
+              Download PDF
+            </a>
           </div>
         </div>
 

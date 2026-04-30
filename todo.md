@@ -46,3 +46,6 @@
 - [x] Mask SSN in admin dashboard (show last 4 digits with click-to-reveal)
 - [x] Mask account and routing numbers in admin dashboard (click-to-reveal like SSN)
 - [x] Restrict bank statement uploads to PDF only
+- [x] Add server-side PDF generation endpoint for application export
+- [x] Add Download PDF button to admin dashboard detail view
+- [x] Write vitest test for PDF export endpoint (valid PDF, sensitive data masking, null fields)
