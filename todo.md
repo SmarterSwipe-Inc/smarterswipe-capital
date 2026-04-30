@@ -50,3 +50,5 @@
 - [x] Add Download PDF button to admin dashboard detail view
 - [x] Write vitest test for PDF export endpoint (valid PDF, sensitive data masking, null fields)
 - [x] Redesign PDF export to match reference application.pdf (clean form style, numbered sections, authorization text, signature block)
+- [x] Fix PDF bullet character rendering as %Î (replace ● with dash)
+- [x] Show full SSN and account/routing numbers in PDF export (no masking)

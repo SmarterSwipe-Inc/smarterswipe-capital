@@ -45,7 +45,7 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
       const displayValue = value || "________________";
       const hintText = hint ? ` ${hint}` : "";
       doc.font("Helvetica").fontSize(11).fillColor("#000000");
-      doc.text(`●  ${label}: ${displayValue}${hintText}`, bulletX, undefined, {
+      doc.text(`-  ${label}: ${displayValue}${hintText}`, bulletX, undefined, {
         width: pageWidth - 18,
       });
       doc.moveDown(0.3);
@@ -83,11 +83,8 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
     bulletField("% Ownership", app.ownershipPercentage);
     bulletField("Date of Birth (MM/DD/YYYY)", app.ownerDob);
 
-    // SSN - masked
-    const maskedSsn = app.ownerSsn
-      ? `***-**-${app.ownerSsn.replace(/\D/g, "").slice(-4)}`
-      : null;
-    bulletField("Social Security Number (SSN)", maskedSsn, "(Required for credit review)");
+    // SSN - full value
+    bulletField("Social Security Number (SSN)", app.ownerSsn, "(Required for credit review)");
 
     bulletField("Personal Phone", app.ownerPhone);
     bulletField("Personal Email", app.ownerEmail);
@@ -113,13 +110,11 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
     bulletField("Primary Business Bank Name", app.bankName);
     bulletField("Account Type", app.accountType, "(Checking / Savings)");
 
-    // Account number - masked
-    const maskedAccount = app.accountNumber ? `****${app.accountNumber.slice(-4)}` : null;
-    bulletField("Account Number", maskedAccount);
+    // Account number - full value
+    bulletField("Account Number", app.accountNumber);
 
-    // Routing number - masked
-    const maskedRouting = app.routingNumber ? `****${app.routingNumber.slice(-4)}` : null;
-    bulletField("Routing Number", maskedRouting);
+    // Routing number - full value
+    bulletField("Routing Number", app.routingNumber);
 
     bulletField("Average Monthly Deposits / Revenue (last 3 months)", app.avgMonthlyRevenue ? `$${app.avgMonthlyRevenue.replace(/^\$/, "")}` : null);
 
@@ -152,7 +147,7 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
       .font("Helvetica")
       .fontSize(11)
       .text(
-        `●  Any liens, judgments, or bankruptcies (business or personal)? ${liensChecked} – Please explain:`,
+        `-  Any liens, judgments, or bankruptcies (business or personal)? ${liensChecked} - Please explain:`,
         bulletX,
         undefined,
         { width: pageWidth - 18 }
@@ -192,7 +187,7 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
 
     requiredDocs.forEach((docItem) => {
       checkPageSpace(30);
-      doc.font("Helvetica").fontSize(11).text(`●  ${docItem}`, bulletX, undefined, { width: pageWidth - 18 });
+      doc.font("Helvetica").fontSize(11).text(`-  ${docItem}`, bulletX, undefined, { width: pageWidth - 18 });
       doc.moveDown(0.3);
     });
 
@@ -250,7 +245,7 @@ export function generateApplicationPdf(app: Record<string, any>): Promise<Buffer
 
     authItems.forEach((item) => {
       checkPageSpace(50);
-      doc.font("Helvetica").fontSize(10).text(`●  ${item}`, 72 + 36, undefined, { width: pageWidth - 36 });
+      doc.font("Helvetica").fontSize(10).text(`-  ${item}`, 72 + 36, undefined, { width: pageWidth - 36 });
       doc.moveDown(0.4);
     });
 
