@@ -1,0 +1,30 @@
+Reference PDF Layout Notes:
+- Clean, simple black-and-white document style (no colored branding/headers)
+- Uses bullet points (•) for each field
+- Format: "Label: ________________" with blank lines for fill-in
+- Section headers are bold, underlined, numbered (1. Basic Business Information, 2. Funding Request Details, etc.)
+- No colored backgrounds, no fancy styling — just a clean form document
+- Fields show hints in parentheses, e.g. "(Sole Prop / LLC / Corporation / Partnership / Other)"
+- Debts section uses numbered list with "| $_______ | $_______" format
+- Section 6: Required Documents — lists document types needed as bullet points
+- Section 7: Authorizations & Certifications — includes full legal text with checkboxes
+- Bottom has Signature/Date and Printed Name/Title lines
+- 3 pages total, standard letter size, generous margins
+- No header/footer branding — just the content
+
+Sections:
+1. Basic Business Information (12 fields)
+2. Funding Request Details (3 fields)
+3. Primary Owner / Principal Information (8 fields + note about additional owners)
+4. Financial & Banking Information (5 fields + debts table + liens checkbox)
+5. Merchant / Processing Information (3 fields)
+6. Required Documents (list of document types)
+7. Authorizations & Certifications (consent text + signature block)
+
+Key differences from current implementation:
+- Current: branded header with blue colors, two-column layout
+- Reference: plain black text, single column, form-style with blank lines
+- Reference: includes full authorization legal text
+- Reference: has signature/date/printed name/title lines at bottom
+- Reference: shows document requirements as a checklist, not uploaded file names
+- When filled in, the blank lines should show the applicant's actual data
