@@ -1,0 +1,25 @@
+Error Screenshot Analysis:
+- The error shows a raw SQL INSERT statement being displayed to the user on screen
+- It's showing the full SQL query with all column names and parameter values
+- This is a database error that's being exposed to the frontend instead of being caught
+- The SQL shows: INSERT INTO applications (all columns) VALUES (?, ?, ?, ...)
+- The params are visible including real user data (Tacos El Patron LLC, SSN, bank info, etc.)
+- This is both a bug (unhandled DB error) and a security issue (exposing raw SQL + data)
+
+Root cause: The tRPC mutation is likely throwing a raw database error that gets serialized 
+and sent to the frontend. The error message includes the full SQL statement.
+
+The issue could be:
+1. A column type mismatch (e.g., trying to insert a string where a number is expected)
+2. A missing/null value for a required column
+3. The documents field format not matching what the DB expects
+4. A field value exceeding column length limits
+
+Looking at the params, I can see the documents field contains JSON array of file paths.
+The values show: "default" appearing multiple times which suggests NULL/default values for 
+optional fields.
+
+Fix needed:
+1. Wrap the DB insert in a try/catch to never expose raw SQL errors
+2. Return a user-friendly error message instead
+3. Investigate which field is causing the actual DB error

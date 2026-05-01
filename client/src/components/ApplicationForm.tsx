@@ -554,15 +554,21 @@ export function ApplicationForm() {
   };
 
   const submitMutation = trpc.application.submit.useMutation({
-    onSuccess: () => {
+    onSuccess: (result) => {
       setSubmitting(false);
-      setSubmitted(true);
-      clearSession();
-      toast.success("Application submitted successfully!");
+      if (result.success) {
+        setSubmitted(true);
+        clearSession();
+        toast.success("Application submitted successfully!");
+      } else {
+        toast.error((result as any).error || "Failed to submit application. Please try again.");
+      }
     },
     onError: (err) => {
       setSubmitting(false);
-      toast.error(err.message || "Failed to submit application. Please try again.");
+      // Never show raw error messages to the user
+      console.error("[Application] Submit error:", err);
+      toast.error("We encountered an issue submitting your application. Please try again or contact support.");
     },
   });
 

@@ -54,3 +54,9 @@
 - [x] Show full SSN and account/routing numbers in PDF export (no masking)
 - [x] Fix DOB format in PDF export (display as MM/DD/YYYY instead of raw digits like 05231973)
 - [x] Redesign PDF to look like a professional fillable paper form (bordered sections, field boxes, grid layout, formal application style)
+- [x] BUG: Application submission shows raw SQL error to user (exposes DB query + user data)
+- [x] Fix: Add proper try/catch error handling in submit mutation to never expose raw SQL
+- [x] Fix: Frontend now handles success:false responses and never displays raw error messages
+- [x] Investigate actual DB insert failure root cause (likely varchar length overflow or field mismatch)
+- [x] Add server-side field validation/truncation before DB insert to prevent failures
+- [x] Add vitest test for application.submit DB failure scenario

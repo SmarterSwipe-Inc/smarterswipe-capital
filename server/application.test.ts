@@ -507,3 +507,77 @@ describe("adminAuth.changePassword", () => {
     }
   });
 });
+
+describe("application.submit - DB failure handling", () => {
+  it("returns success:false with user-friendly message when DB insert fails", async () => {
+    const { createApplication } = await import("./db");
+    // Simulate a DB error (e.g., varchar overflow, connection issue)
+    (createApplication as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("Data too long for column 'legalBusinessName' at row 1")
+    );
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.application.submit({
+      legalBusinessName: "Test Business That Causes DB Error",
+      ownerEmail: "test@example.com",
+    });
+
+    // Should return success:false, NOT throw an error
+    expect(result.success).toBe(false);
+    expect(result.id).toBeNull();
+    expect(result.emailSent).toBe(false);
+    // Error message should be user-friendly, not raw SQL
+    expect(result.error).toBeDefined();
+    expect(result.error).not.toContain("Data too long");
+    expect(result.error).not.toContain("SQL");
+    expect(result.error).toContain("try again");
+  });
+
+  it("never exposes raw SQL query text in error responses", async () => {
+    const { createApplication } = await import("./db");
+    // Simulate a raw SQL error with query text and params
+    (createApplication as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("INSERT INTO applications (legalBusinessName, ssn) VALUES ('test', '123-45-6789') - ER_DATA_TOO_LONG")
+    );
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.application.submit({
+      legalBusinessName: "SQL Error Test",
+      ownerSsn: "123-45-6789",
+    });
+
+    expect(result.success).toBe(false);
+    // Ensure no SQL keywords or sensitive data leak through
+    expect(result.error).not.toContain("INSERT INTO");
+    expect(result.error).not.toContain("123-45-6789");
+    expect(result.error).not.toContain("applications");
+  });
+
+  it("truncates overlength varchar fields before DB insert", async () => {
+    const { createApplication } = await import("./db");
+    (createApplication as ReturnType<typeof vi.fn>).mockClear();
+    (createApplication as ReturnType<typeof vi.fn>).mockResolvedValueOnce(99);
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Submit with a field that exceeds the varchar(255) limit
+    const overlongName = "A".repeat(500);
+    const result = await caller.application.submit({
+      legalBusinessName: overlongName,
+      federalTaxId: "B".repeat(100), // varchar(32) in schema
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.id).toBe(99);
+
+    // Verify the data passed to createApplication was truncated
+    const callArgs = (createApplication as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(callArgs.legalBusinessName.length).toBe(255);
+    expect(callArgs.federalTaxId.length).toBe(32);
+  });
+});
