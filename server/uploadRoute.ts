@@ -45,8 +45,14 @@ uploadRouter.post("/api/upload", async (req: Request, res: Response) => {
     // Decode base64 to buffer
     const buffer = Buffer.from(fileData, "base64");
 
+    // Sanitize filename: replace spaces and special characters with underscores
+    // This prevents CloudFront signed URL issues with encoded characters
+    const sanitizedFileName = fileName
+      .replace(/[^a-zA-Z0-9._-]/g, "_") // Replace any non-alphanumeric (except . _ -) with underscore
+      .replace(/_+/g, "_"); // Collapse multiple underscores
+
     // Upload to S3 via storage helper
-    const relKey = `applications/docs/${fileName}`;
+    const relKey = `applications/docs/${sanitizedFileName}`;
     const { key, url } = await storagePut(relKey, buffer, mimeType);
 
     res.json({ key, url });

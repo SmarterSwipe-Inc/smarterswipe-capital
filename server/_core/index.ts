@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { uploadRouter } from "../uploadRoute";
 import { pdfRouter } from "../pdfRoute";
+import { docRouter } from "../docRoute";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -40,6 +41,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   app.use(uploadRouter);
   app.use(pdfRouter);
+  app.use(docRouter);
   // tRPC API
   app.use(
     "/api/trpc",

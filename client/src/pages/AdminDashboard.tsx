@@ -298,21 +298,30 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
                 Documents
               </h3>
               <div className="space-y-2">
-                {docs.map((doc: string, i: number) => (
-                  <a
-                    key={i}
-                    href={doc}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 p-3 rounded-lg bg-[#f8f9fc] hover:bg-[#f0f4ff] transition-colors group"
-                  >
-                    <FileText size={16} className="text-[#2951D5]" />
-                    <span className="text-sm text-[#3a3f4b] group-hover:text-[#2951D5] truncate flex-1">
-                      Document {i + 1}
-                    </span>
-                    <Download size={14} className="text-[#9ca3af] group-hover:text-[#2951D5]" />
-                  </a>
-                ))}
+                {docs.map((doc: string, i: number) => {
+                  // Extract the storage key from the /manus-storage/ path
+                  const storageKey = doc.replace(/^\/manus-storage\//, "");
+                  // Extract display filename: remove path prefix and hash suffix
+                  const rawName = storageKey.split("/").pop() || `Document ${i + 1}`;
+                  const displayName = rawName.replace(/_[a-f0-9]{8}(\.[^.]+)$/, "$1");
+                  // Route through the admin document proxy to avoid CloudFront signed URL issues
+                  const proxyUrl = `/api/admin/documents?key=${encodeURIComponent(storageKey)}`;
+                  return (
+                    <a
+                      key={i}
+                      href={proxyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 rounded-lg bg-[#f8f9fc] hover:bg-[#f0f4ff] transition-colors group"
+                    >
+                      <FileText size={16} className="text-[#2951D5]" />
+                      <span className="text-sm text-[#3a3f4b] group-hover:text-[#2951D5] truncate flex-1">
+                        {displayName}
+                      </span>
+                      <Download size={14} className="text-[#9ca3af] group-hover:text-[#2951D5]" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
           );

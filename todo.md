@@ -60,3 +60,7 @@
 - [x] Investigate actual DB insert failure root cause (likely varchar length overflow or field mismatch)
 - [x] Add server-side field validation/truncation before DB insert to prevent failures
 - [x] Add vitest test for application.submit DB failure scenario
+- [x] BUG: Document links in admin dashboard show "Access Denied" — S3 presigned URLs expired or not refreshing
+- [x] Fix document download via new /api/admin/documents proxy endpoint using raw TLS socket to bypass CloudFront space-encoding bug
+- [x] Add vitest test for /api/admin/documents endpoint (auth check + key handling)
+- [x] Sanitize uploaded filenames to prevent future space-encoding issues

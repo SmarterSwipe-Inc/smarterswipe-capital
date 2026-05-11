@@ -1,0 +1,30 @@
+{
+  "query": "SELECT id, documents FROM applications WHERE documents IS NOT NULL LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3NshuH8nWTqH6Uk.4a2e1c901557 --database bg682ZZYSf7zZ2GPuGAVzn --execute SELECT id, documents FROM applications WHERE documents IS NOT NULL LIMIT 5;",
+  "rows": [
+    {
+      "id": "60002",
+      "documents": "[\"/manus-storage/applications/docs/IMG_2250_24e83c98.jpeg\", \"/manus-storage/applications/docs/IMG_2252_56790eaf.jpeg\", \"/manus-storage/applications/docs/image_58d04378.jpg\", \"/manus-storage/applications/docs/March-Statement _3922606e.pdf\", \"/manus-storage/applications/docs/February- Statement _111b5aa5.pdf\", \"/manus-storage/applications/docs/January-Statement _385495eb.pdf\"]"
+    },
+    {
+      "id": "210001",
+      "documents": "[\"/manus-storage/applications/docs/IMG_6446_9eedc665.jpeg\", \"/manus-storage/applications/docs/IMG_6447_8c0a61d6.jpeg\", \"/manus-storage/applications/docs/image_c96dc40c.jpg\"]"
+    },
+    {
+      "id": "270001",
+      "documents": "[\"/manus-storage/applications/docs/Bank statements 1_fcea4eef.pdf\", \"/manus-storage/applications/docs/Bank statements 2_0d2a420c.pdf\", \"/manus-storage/applications/docs/Bank statements 3_2c34574c.pdf\"]"
+    },
+    {
+      "id": "300001",
+      "documents": "[\"/manus-storage/applications/docs/IMG_1434_e165e2e5.pdf\", \"/manus-storage/applications/docs/IMG_1435 2_34d7bec9.pdf\", \"/manus-storage/applications/docs/CARAMELA VOIDED CHECK_f142566f.jpeg\", \"/manus-storage/applications/docs/20260227-statements-1172-_db723a6d.pdf\", \"/manus-storage/applications/docs/20260227-statements-1172-_29051c1c.pdf\", \"/manus-storage/applications/docs/20260331-statements-1172-_ddad7df0.pdf\", \"/manus-storage/applications/docs/Statement_Location_496526001888_20260228_c0700bd2.pdf\", \"/manus-storage/applications/docs/Statement_Location_496526001888_20260331_6549a2d6.pdf\", \"/manus-storage/applications/docs/Statement_Location_496526001888_20260430_83a9f2a0.pdf\"]"
+    },
+    {
+      "id": "330001",
+      "documents": "[\"/manus-storage/applications/docs/IMG_1078_1847c1b3.jpeg\", \"/manus-storage/applications/docs/IMG_1077_03c8c4d9.jpeg\", \"/manus-storage/applications/docs/April 2026_03246b19.pdf\", \"/manus-storage/applications/docs/Feb 2026_1d415425.pdf\", \"/manus-storage/applications/docs/Mar 2026_847f964c.pdf\"]"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdocuments\n60002\t[\"/manus-storage/applications/docs/IMG_2250_24e83c98.jpeg\", \"/manus-storage/applications/docs/IMG_2252_56790eaf.jpeg\", \"/manus-storage/applications/docs/image_58d04378.jpg\", \"/manus-storage/applications/docs/March-Statement _3922606e.pdf\", \"/manus-storage/applications/docs/February- Statement _111b5aa5.pdf\", \"/manus-storage/applications/docs/January-Statement _385495eb.pdf\"]\n210001\t[\"/manus-storage/applications/docs/IMG_6446_9eedc665.jpeg\", \"/manus-storage/applications/docs/IMG_6447_8c0a61d6.jpeg\", \"/manus-storage/applications/docs/image_c96dc40c.jpg\"]\n270001\t[\"/manus-storage/applications/docs/Bank statements 1_fcea4eef.pdf\", \"/manus-storage/applications/docs/Bank statements 2_0d2a420c.pdf\", \"/manus-storage/applications/docs/Bank statements 3_2c34574c.pdf\"]\n300001\t[\"/manus-storage/applications/docs/IMG_1434_e165e2e5.pdf\", \"/manus-storage/applications/docs/IMG_1435 2_34d7bec9.pdf\", \"/manus-storage/applications/docs/CARAMELA VOIDED CHECK_f142566f.jpeg\", \"/manus-storage/applications/docs/20260227-statements-1172-_db723a6d.pdf\", \"/manus-storage/applications/docs/20260227-statements-1172-_29051c1c.pdf\", \"/manus-storage/applications/docs/20260331-statements-1172-_ddad7df0.pdf\", \"/manus-storage/applications/docs/Statement_Location_496526001888_20260228_c0700bd2.pdf\", \"/manus-storage/applications/docs/Statement_Location_496526001888_20260331_6549a2d6.pdf\", \"/manus-storage/applications/docs/Statement_Location_496526001888_20260430_83a9f2a0.pdf\"]\n330001\t[\"/manus-storage/applications/docs/IMG_1078_1847c1b3.jpeg\", \"/manus-storage/applications/docs/IMG_1077_03c8c4d9.jpeg\", \"/manus-storage/applications/docs/April 2026_03246b19.pdf\", \"/manus-storage/applications/docs/Feb 2026_1d415425.pdf\", \"/manus-storage/applications/docs/Mar 2026_847f964c.pdf\"]\n",
+  "stderr": "",
+  "execution_time_ms": 344
+}
