@@ -68,6 +68,92 @@ function UnauthorizedScreen({ message }: { message: string }) {
   );
 }
 
+/* ─── Document Link with Loading Spinner ─── */
+function DocumentLink({ proxyUrl, displayName }: { proxyUrl: string; displayName: string }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (loading) return;
+
+    setLoading(true);
+    setError(false);
+
+    try {
+      const resp = await fetch(proxyUrl, { credentials: "include" });
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}`);
+      }
+
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Open in new tab for viewable types (PDF, images), download for others
+      const contentType = resp.headers.get("content-type") || "";
+      const isViewable = contentType.startsWith("image/") || contentType === "application/pdf";
+
+      if (isViewable) {
+        window.open(blobUrl, "_blank");
+      } else {
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = displayName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+
+      // Revoke after a short delay to allow the browser to use it
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } catch {
+      setError(true);
+      setTimeout(() => setError(false), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+        error
+          ? "bg-red-50 hover:bg-red-100"
+          : loading
+            ? "bg-[#f0f4ff] cursor-wait"
+            : "bg-[#f8f9fc] hover:bg-[#f0f4ff]"
+      } group`}
+    >
+      {loading ? (
+        <Loader2 size={16} className="text-[#2951D5] animate-spin shrink-0" />
+      ) : error ? (
+        <XCircle size={16} className="text-red-400 shrink-0" />
+      ) : (
+        <FileText size={16} className="text-[#2951D5] shrink-0" />
+      )}
+      <span
+        className={`text-sm truncate flex-1 ${
+          error
+            ? "text-red-600"
+            : loading
+              ? "text-[#2951D5]"
+              : "text-[#3a3f4b] group-hover:text-[#2951D5]"
+        }`}
+      >
+        {error ? "Failed to load — click to retry" : loading ? `Loading ${displayName}…` : displayName}
+      </span>
+      {!loading && !error && (
+        <Download size={14} className="text-[#9ca3af] group-hover:text-[#2951D5] shrink-0" />
+      )}
+      {loading && (
+        <span className="text-xs text-[#6b7280] shrink-0">Fetching…</span>
+      )}
+    </button>
+  );
+}
+
 /* ─── Application Detail View ─── */
 function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
   const { data: app, isLoading } = trpc.application.getById.useQuery({ id });
@@ -299,27 +385,16 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
               </h3>
               <div className="space-y-2">
                 {docs.map((doc: string, i: number) => {
-                  // Extract the storage key from the /manus-storage/ path
                   const storageKey = doc.replace(/^\/manus-storage\//, "");
-                  // Extract display filename: remove path prefix and hash suffix
                   const rawName = storageKey.split("/").pop() || `Document ${i + 1}`;
                   const displayName = rawName.replace(/_[a-f0-9]{8}(\.[^.]+)$/, "$1");
-                  // Route through the admin document proxy to avoid CloudFront signed URL issues
                   const proxyUrl = `/api/admin/documents?key=${encodeURIComponent(storageKey)}`;
                   return (
-                    <a
+                    <DocumentLink
                       key={i}
-                      href={proxyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 rounded-lg bg-[#f8f9fc] hover:bg-[#f0f4ff] transition-colors group"
-                    >
-                      <FileText size={16} className="text-[#2951D5]" />
-                      <span className="text-sm text-[#3a3f4b] group-hover:text-[#2951D5] truncate flex-1">
-                        {displayName}
-                      </span>
-                      <Download size={14} className="text-[#9ca3af] group-hover:text-[#2951D5]" />
-                    </a>
+                      proxyUrl={proxyUrl}
+                      displayName={displayName}
+                    />
                   );
                 })}
               </div>

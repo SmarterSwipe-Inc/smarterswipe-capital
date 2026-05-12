@@ -64,3 +64,4 @@
 - [x] Fix document download via new /api/admin/documents proxy endpoint using raw TLS socket to bypass CloudFront space-encoding bug
 - [x] Add vitest test for /api/admin/documents endpoint (auth check + key handling)
 - [x] Sanitize uploaded filenames to prevent future space-encoding issues
+- [x] Add visual loading spinner while document proxy fetches/streams files in admin dashboard
