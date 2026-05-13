@@ -567,11 +567,23 @@ export function ApplicationForm() {
     setter((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const formTopRef = useRef<HTMLDivElement>(null);
+
+  const scrollToFormTop = () => {
+    formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const next = () => {
-    if (step < STEPS.length - 1) setStep(step + 1);
+    if (step < STEPS.length - 1) {
+      setStep(step + 1);
+      scrollToFormTop();
+    }
   };
   const prev = () => {
-    if (step > 0) setStep(step - 1);
+    if (step > 0) {
+      setStep(step - 1);
+      scrollToFormTop();
+    }
   };
 
   const submitMutation = trpc.application.submit.useMutation({
@@ -702,7 +714,7 @@ export function ApplicationForm() {
   }
 
   return (
-    <div>
+    <div ref={formTopRef}>
       {/* ─── Step indicator ─── */}
       <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
         {STEPS.map((s, i) => {
@@ -712,7 +724,7 @@ export function ApplicationForm() {
           return (
             <div key={i} className="flex items-center shrink-0">
               <button
-                onClick={() => i <= step && setStep(i)}
+                onClick={() => { if (i <= step) { setStep(i); scrollToFormTop(); } }}
                 className={`flex flex-col items-center gap-1 transition-all ${
                   i <= step ? "cursor-pointer" : "cursor-default"
                 }`}
