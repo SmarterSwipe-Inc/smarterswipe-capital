@@ -27,6 +27,7 @@ import {
   Upload,
   X,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,6 +43,7 @@ interface FormData {
   website: string;
   businessPhone: string;
   businessEmail: string;
+  businessState: string;
   physicalAddress: string;
   mailingAddress: string;
   amountRequested: string;
@@ -96,6 +98,7 @@ const initialFormData: FormData = {
   website: "",
   businessPhone: "",
   businessEmail: "",
+  businessState: "",
   physicalAddress: "",
   mailingAddress: "",
   amountRequested: "",
@@ -132,6 +135,15 @@ const initialFormData: FormData = {
   signatureName: "",
   signatureTitle: "",
 };
+
+const US_STATES = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+  "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+  "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+  "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+  "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY",
+  "DC", "PR", "VI", "GU", "AS", "MP",
+];
 
 const STEPS = [
   { label: "Business", icon: Building2 },
@@ -433,15 +445,23 @@ export function ApplicationForm() {
   const [processingStatementDocs, setProcessingStatementDocs] = useState<UploadedFile[]>(
     () => loadFromSession<UploadedFile[]>(STORAGE_KEY_DOCS, []).filter((d: any) => d._cat === "ps").map(({ _cat, ...rest }: any) => rest)
   );
+  const [additionalDocsDocs, setAdditionalDocsDocs] = useState<UploadedFile[]>(
+    () => loadFromSession<UploadedFile[]>(STORAGE_KEY_DOCS, []).filter((d: any) => d._cat === "ad").map(({ _cat, ...rest }: any) => rest)
+  );
 
   // Per-category uploading state
   const [uploadingDL, setUploadingDL] = useState(false);
   const [uploadingVC, setUploadingVC] = useState(false);
   const [uploadingBS, setUploadingBS] = useState(false);
   const [uploadingPS, setUploadingPS] = useState(false);
+  const [uploadingAD, setUploadingAD] = useState(false);
+
+  // CA/NY requires 4 months of statements
+  const isCAorNY = data.businessState === "CA" || data.businessState === "NY";
+  const monthsRequired = isCAorNY ? 4 : 3;
 
   // Track whether any upload is in progress
-  const isAnyUploading = uploadingDL || uploadingVC || uploadingBS || uploadingPS;
+  const isAnyUploading = uploadingDL || uploadingVC || uploadingBS || uploadingPS || uploadingAD;
 
   // Persist form data to sessionStorage whenever it changes (excluding sensitive fields)
   useEffect(() => {
@@ -459,9 +479,10 @@ export function ApplicationForm() {
       ...voidedCheckDocs.map((d) => ({ ...d, _cat: "vc" })),
       ...bankStatementDocs.map((d) => ({ ...d, _cat: "bs" })),
       ...processingStatementDocs.map((d) => ({ ...d, _cat: "ps" })),
+      ...additionalDocsDocs.map((d) => ({ ...d, _cat: "ad" })),
     ];
     saveToSession(STORAGE_KEY_DOCS, allDocs);
-  }, [driversLicenseDocs, voidedCheckDocs, bankStatementDocs, processingStatementDocs]);
+  }, [driversLicenseDocs, voidedCheckDocs, bankStatementDocs, processingStatementDocs, additionalDocsDocs]);
 
   // beforeunload warning when form has data
   const hasFormData = useCallback(() => {
@@ -589,6 +610,7 @@ export function ApplicationForm() {
       ...voidedCheckDocs.map((d) => d.url),
       ...bankStatementDocs.map((d) => d.url),
       ...processingStatementDocs.map((d) => d.url),
+      ...additionalDocsDocs.map((d) => d.url),
     ];
 
     // Map frontend form fields to the API schema — all fields included
@@ -828,6 +850,17 @@ export function ApplicationForm() {
                 type="email"
                 required
               />
+            </Row2>
+            <Row2>
+              <SelectInput
+                label="Business State"
+                value={data.businessState}
+                onChange={(v) => update("businessState", v)}
+                options={US_STATES}
+                placeholder="Select state..."
+                required
+              />
+              <div />
             </Row2>
             <TextInput
               label="Physical Address"
@@ -1151,8 +1184,21 @@ export function ApplicationForm() {
               onAdd={(files) => handleImmediateUpload(files, setVoidedCheckDocs, setUploadingVC)}
               onRemove={(i) => removeUploadedFile(setVoidedCheckDocs, i)}
             />
+            {isCAorNY && (
+              <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                <AlertCircle size={18} className="text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[14px] font-semibold text-amber-800">
+                    California & New York Requirement
+                  </p>
+                  <p className="text-[13px] text-amber-700 mt-1">
+                    Businesses in CA or NY must submit <strong>4 months</strong> of bank statements and processing statements.
+                  </p>
+                </div>
+              </div>
+            )}
             <FileUploadField
-              label="Bank Statements — Most Recent 3 Months"
+              label={`Bank Statements — Most Recent ${monthsRequired} Months`}
               uploadedFiles={bankStatementDocs}
               uploading={uploadingBS}
               onAdd={(files) => handleBankStatementUpload(files)}
@@ -1162,13 +1208,23 @@ export function ApplicationForm() {
               acceptLabel="PDF only (max 10MB)"
             />
             <FileUploadField
-              label="Processing / Merchant Statements — Most Recent 3 Months"
+              label={`Processing / Merchant Statements — Most Recent ${monthsRequired} Months`}
               uploadedFiles={processingStatementDocs}
               uploading={uploadingPS}
               onAdd={(files) => handleImmediateUpload(files, setProcessingStatementDocs, setUploadingPS)}
               onRemove={(i) => removeUploadedFile(setProcessingStatementDocs, i)}
               multiple
             />
+            {isCAorNY && (
+              <FileUploadField
+                label="Additional Supporting Documents (CA/NY)"
+                uploadedFiles={additionalDocsDocs}
+                uploading={uploadingAD}
+                onAdd={(files) => handleImmediateUpload(files, setAdditionalDocsDocs, setUploadingAD)}
+                onRemove={(i) => removeUploadedFile(setAdditionalDocsDocs, i)}
+                multiple
+              />
+            )}
           </div>
         )}
 

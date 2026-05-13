@@ -65,3 +65,6 @@
 - [x] Add vitest test for /api/admin/documents endpoint (auth check + key handling)
 - [x] Sanitize uploaded filenames to prevent future space-encoding issues
 - [x] Add visual loading spinner while document proxy fetches/streams files in admin dashboard
+- [x] Add CA/NY conditional note: "Submit 4 months of bank and processing statements"
+- [x] Add 4th file upload slot ("Additional Supporting Documents (CA/NY)") shown only for CA/NY, plus 4-month requirement notice
+- [x] Add Business State dropdown to Step 0 (Business Info)
