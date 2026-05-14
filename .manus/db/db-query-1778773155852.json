@@ -1,0 +1,34 @@
+{
+  "query": "SELECT * FROM admin_credentials;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3NshuH8nWTqH6Uk.4a2e1c901557 --database bg682ZZYSf7zZ2GPuGAVzn --execute SELECT * FROM admin_credentials;",
+  "rows": [
+    {
+      "id": "1",
+      "email": "jonah@smarterswipe.com",
+      "passwordHash": "$2b$12$6HGiczR6UmkwuttYfgF6DOLbg1p.Wl8zAhpDqj9X2aRePQW7zTJiG",
+      "name": "Jonah",
+      "createdAt": "2026-04-27 20:18:39",
+      "updatedAt": "2026-04-27 20:18:39"
+    },
+    {
+      "id": "2",
+      "email": "eric@smarterswipe.com",
+      "passwordHash": "$2b$12$6HGiczR6UmkwuttYfgF6DOLbg1p.Wl8zAhpDqj9X2aRePQW7zTJiG",
+      "name": "Eric",
+      "createdAt": "2026-04-27 20:18:39",
+      "updatedAt": "2026-04-27 20:18:39"
+    },
+    {
+      "id": "3",
+      "email": "billy@smarterswipe.com",
+      "passwordHash": "$2b$12$6HGiczR6UmkwuttYfgF6DOLbg1p.Wl8zAhpDqj9X2aRePQW7zTJiG",
+      "name": "Billy",
+      "createdAt": "2026-04-27 20:18:39",
+      "updatedAt": "2026-04-27 20:18:39"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tpasswordHash\tname\tcreatedAt\tupdatedAt\n1\tjonah@smarterswipe.com\t$2b$12$6HGiczR6UmkwuttYfgF6DOLbg1p.Wl8zAhpDqj9X2aRePQW7zTJiG\tJonah\t2026-04-27 20:18:39\t2026-04-27 20:18:39\n2\teric@smarterswipe.com\t$2b$12$6HGiczR6UmkwuttYfgF6DOLbg1p.Wl8zAhpDqj9X2aRePQW7zTJiG\tEric\t2026-04-27 20:18:39\t2026-04-27 20:18:39\n3\tbilly@smarterswipe.com\t$2b$12$6HGiczR6UmkwuttYfgF6DOLbg1p.Wl8zAhpDqj9X2aRePQW7zTJiG\tBilly\t2026-04-27 20:18:39\t2026-04-27 20:18:39\n",
+  "stderr": "",
+  "execution_time_ms": 254
+}

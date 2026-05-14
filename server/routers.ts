@@ -5,7 +5,7 @@ import { publicProcedure, smarterswipeAdminProcedure, router } from "./_core/trp
 import { createApplication, listApplications, getApplicationById, updateApplicationStatus, getAdminByEmail, updateAdminPasswordHash } from "./db";
 import { notifyOwner } from "./_core/notification";
 import { sendEmail } from "./email";
-import { applicationConfirmationEmail } from "./emailTemplates";
+import { applicationConfirmationEmail, passwordResetEmail } from "./emailTemplates";
 import { validateAdminLogin, signAdminSession, seedAdminAccount, isWhitelistedAdmin, hashPassword } from "./adminAuth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -87,6 +87,96 @@ export const appRouter = router({
         await updateAdminPasswordHash(email, newHash);
 
         return { success: true as const };
+      }),
+
+    /** Forgot password — sends a reset link to whitelisted admin email */
+    forgotPassword: publicProcedure
+      .input(
+        z.object({
+          email: z.string().email(),
+          origin: z.string().url(),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        const normalizedEmail = input.email.toLowerCase().trim();
+
+        // Always return success to avoid email enumeration
+        if (!isWhitelistedAdmin(normalizedEmail)) {
+          return { success: true as const };
+        }
+
+        const admin = await getAdminByEmail(normalizedEmail);
+        if (!admin) {
+          return { success: true as const };
+        }
+
+        // Validate origin against allowed domains to prevent token theft
+        const ALLOWED_ORIGINS = [
+          "https://getapproved.smarterswipe.com",
+          "https://smarterswipe-capital.manus.space",
+        ];
+        // In development, also allow localhost
+        if (process.env.NODE_ENV === "development") {
+          ALLOWED_ORIGINS.push("http://localhost:3000", "http://localhost:5173");
+        }
+        const safeOrigin = ALLOWED_ORIGINS.includes(input.origin)
+          ? input.origin
+          : ALLOWED_ORIGINS[0];
+
+        try {
+          // Generate a time-limited reset token (JWT, 1 hour expiry)
+          const { SignJWT } = await import("jose");
+          const secret = new TextEncoder().encode("reset:" + (process.env.JWT_SECRET || "fallback"));
+          const token = await new SignJWT({ email: normalizedEmail, adminId: admin.id })
+            .setProtectedHeader({ alg: "HS256" })
+            .setExpirationTime("1h")
+            .setIssuedAt()
+            .sign(secret);
+
+          // Build the reset link using validated origin
+          const resetUrl = `${safeOrigin}/admin/reset-password?token=${encodeURIComponent(token)}`;
+
+          // Send the email
+          await sendEmail({
+            to: normalizedEmail,
+            subject: "Reset Your Admin Password \u2014 SmarterSwipe Capital",
+            html: passwordResetEmail({ name: admin.name, resetUrl }),
+          });
+        } catch (err) {
+          console.error("[ForgotPassword] Failed to send reset email:", err);
+          // Still return success to avoid leaking info about email delivery failures
+        }
+
+        return { success: true as const };
+      }),
+
+    /** Reset password — validates token and sets new password */
+    resetPassword: publicProcedure
+      .input(
+        z.object({
+          token: z.string().min(1),
+          newPassword: z.string().min(8, "Password must be at least 8 characters"),
+        }),
+      )
+      .mutation(async ({ input }) => {
+        try {
+          const { jwtVerify } = await import("jose");
+          const secret = new TextEncoder().encode("reset:" + (process.env.JWT_SECRET || "fallback"));
+          const { payload } = await jwtVerify(input.token, secret, { algorithms: ["HS256"] });
+
+          const email = payload.email as string;
+          if (!email || !isWhitelistedAdmin(email)) {
+            return { success: false as const, error: "Invalid or expired reset link." };
+          }
+
+          // Hash and save new password
+          const newHash = await hashPassword(input.newPassword);
+          await updateAdminPasswordHash(email, newHash);
+
+          return { success: true as const };
+        } catch {
+          return { success: false as const, error: "Invalid or expired reset link. Please request a new one." };
+        }
       }),
 
     /** Set up an admin account — only existing admins can create new accounts */

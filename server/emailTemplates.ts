@@ -175,3 +175,109 @@ function escapeHtml(str: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 }
+
+/**
+ * Build the password reset email HTML sent to admin users.
+ */
+export function passwordResetEmail(params: {
+  name: string;
+  resetUrl: string;
+}): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Your Password</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color:#0B1120;padding:32px 40px;text-align:center;">
+              <span style="font-size:22px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">SMARTERSWIPE</span>
+              <span style="font-size:22px;font-weight:300;color:#7c8db5;letter-spacing:0.5px;"> CAPITAL</span>
+            </td>
+          </tr>
+
+          <!-- Icon -->
+          <tr>
+            <td style="padding:40px 40px 0 40px;text-align:center;">
+              <div style="width:64px;height:64px;border-radius:50%;background-color:#dbeafe;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;">
+                <span style="font-size:28px;line-height:64px;">&#128274;</span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:24px 40px 0 40px;">
+              <h1 style="margin:0 0 16px 0;font-size:24px;font-weight:700;color:#0B1120;text-align:center;">
+                Reset Your Password
+              </h1>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:26px;color:#4b5563;text-align:center;">
+                Hi ${escapeHtml(params.name)},
+              </p>
+              <p style="margin:0 0 24px 0;font-size:16px;line-height:26px;color:#4b5563;">
+                We received a request to reset your admin password. Click the button below to set a new password. This link expires in <strong>1 hour</strong>.
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA Button -->
+          <tr>
+            <td style="padding:8px 40px 32px 40px;text-align:center;">
+              <a href="${params.resetUrl}" style="display:inline-block;background-color:#2951D5;color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 40px;border-radius:8px;">
+                Reset Password
+              </a>
+            </td>
+          </tr>
+
+          <!-- Fallback Link -->
+          <tr>
+            <td style="padding:0 40px 32px 40px;">
+              <p style="margin:0;font-size:13px;line-height:20px;color:#9ca3af;text-align:center;">
+                If the button doesn't work, copy and paste this link into your browser:
+              </p>
+              <p style="margin:8px 0 0 0;font-size:12px;line-height:18px;color:#2951D5;text-align:center;word-break:break-all;">
+                ${escapeHtml(params.resetUrl)}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Security Note -->
+          <tr>
+            <td style="padding:0 40px 32px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
+                <tr>
+                  <td style="padding:16px;">
+                    <p style="margin:0;font-size:13px;line-height:20px;color:#92400e;">
+                      <strong>Didn't request this?</strong> If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f8f9fc;padding:24px 40px;border-top:1px solid #e5e7eb;">
+              <p style="margin:0;font-size:12px;line-height:20px;color:#9ca3af;text-align:center;">
+                SmarterSwipe Capital &mdash; Admin Portal<br />
+                This is an automated email. Please do not reply.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}

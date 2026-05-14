@@ -69,3 +69,6 @@
 - [x] Add 4th file upload slot ("Additional Supporting Documents (CA/NY)") shown only for CA/NY, plus 4-month requirement notice
 - [x] Add Business State dropdown to Step 0 (Business Info)
 - [x] Scroll to top of form when navigating between form steps (Next/Previous)
+- [x] Add Forgot Password feature: backend reset token generation + email sending
+- [x] Add Forgot Password link on admin login page
+- [x] Add Reset Password page (enter new password with valid token)
