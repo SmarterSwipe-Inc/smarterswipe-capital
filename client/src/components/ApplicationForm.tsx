@@ -731,7 +731,7 @@ export function ApplicationForm() {
       {/* ─── Form card ─── */}
       <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-6 sm:p-10 lg:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_12px_48px_rgba(41,81,213,0.06)] overflow-visible">
       {/* ─── Step indicator ─── */}
-      <div className="flex items-center justify-between mb-10 overflow-x-auto overflow-y-visible pb-4 pt-4 px-1">
+      <div className="flex items-center justify-between mb-10 overflow-visible pb-4 pt-4 px-4 sm:px-6">
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const isActive = i === step;
