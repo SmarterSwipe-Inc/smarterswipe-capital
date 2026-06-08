@@ -729,7 +729,7 @@ export function ApplicationForm() {
       </div>
 
       {/* ─── Form card ─── */}
-      <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-6 sm:p-10 lg:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_12px_48px_rgba(41,81,213,0.06)]">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-6 sm:p-10 lg:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_12px_48px_rgba(41,81,213,0.06)] overflow-visible">
       {/* ─── Step indicator ─── */}
       <div className="flex items-center justify-between mb-10 overflow-x-auto overflow-y-visible pb-4 pt-4 px-1">
         {STEPS.map((s, i) => {
@@ -740,7 +740,7 @@ export function ApplicationForm() {
             <div key={i} className="flex items-center shrink-0">
               <button
                 onClick={() => { if (i <= step) { setStep(i); scrollToFormTop(); } }}
-                className={`flex flex-col items-center gap-1.5 transition-all ${
+                className={`flex flex-col items-center gap-1.5 transition-all relative z-10 ${
                   i <= step ? "cursor-pointer" : "cursor-default"
                 } ${isActive ? "scale-110" : ""}`}
               >
@@ -773,7 +773,7 @@ export function ApplicationForm() {
               </button>
               {i < STEPS.length - 1 && (
                 <div
-                  className={`w-3 sm:w-5 md:w-8 lg:w-10 h-[2px] mx-0.5 sm:mx-1 rounded-full shrink-0 transition-all duration-300 ${
+                  className={`w-3 sm:w-5 md:w-8 lg:w-10 h-[2px] mx-0.5 sm:mx-1 rounded-full shrink-0 transition-all duration-300 z-0 ${
                     i < step ? "bg-[#22c55e]" : "bg-[#e5e7eb]"
                   }`}
                 />
