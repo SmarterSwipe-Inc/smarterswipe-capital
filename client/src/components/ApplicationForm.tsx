@@ -30,6 +30,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { SmarterSwipeLogo } from "@/components/SmarterSwipeLogo";
 
 /* ───── Types ───── */
 interface FormData {
@@ -719,11 +720,7 @@ export function ApplicationForm() {
     <div ref={formTopRef} className="min-h-screen bg-gradient-to-br from-[#f0f4ff] via-[#f8f9fc] to-[#f5f0ff] py-8 sm:py-12 px-4">
       {/* ─── Branded header ─── */}
       <div className="max-w-3xl mx-auto mb-8 flex flex-col items-center">
-        <img
-          src="/manus-storage/smarterswipe_logo_468640f5.png"
-          alt="SmarterSwipe"
-          className="h-8 w-auto mb-3"
-        />
+        <SmarterSwipeLogo variant="dark" className="mb-3" />
         <p className="text-[13px] text-[#6b7280] font-medium tracking-wide uppercase">Business Capital Application</p>
       </div>
 
