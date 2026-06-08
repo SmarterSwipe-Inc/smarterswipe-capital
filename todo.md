@@ -72,3 +72,6 @@
 - [x] Add Forgot Password feature: backend reset token generation + email sending
 - [x] Add Forgot Password link on admin login page
 - [x] Add Reset Password page (enter new password with valid token)
+- [x] Redesign homepage: remove all landing page content (hero, problem, solution, FAQ, footer, navbar)
+- [x] Homepage should ONLY show the ApplicationForm — form IS the entire page
+- [x] Keep admin side completely unchanged
