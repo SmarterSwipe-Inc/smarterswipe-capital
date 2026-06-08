@@ -642,12 +642,12 @@ export default function Home() {
                 {["Payments", "Point of Sale", "Capital", "Technology"].map(
                   (item) => (
                     <li key={item}>
-                      <a
-                        href={`https://smarterswipe.com/${item.toLowerCase().replace(/ /g, "-")}`}
-                        className="text-[14px] text-[#6b7280] hover:text-[#2951D5] transition-colors"
+                      <span
+                        className="text-[14px] text-[#6b7280] hover:text-[#2951D5] transition-colors cursor-pointer"
+                        onClick={() => document.getElementById("form-section")?.scrollIntoView({ behavior: "smooth" })}
                       >
                         {item}
-                      </a>
+                      </span>
                     </li>
                   )
                 )}
@@ -660,15 +660,15 @@ export default function Home() {
                 Company
               </h4>
               <ul className="space-y-3">
-                {["About Us", "Blog", "Become An Agent", "Client Login"].map(
+                {["About Us", "Blog", "Become An Agent"].map(
                   (item) => (
                     <li key={item}>
-                      <a
-                        href={`https://smarterswipe.com/${item.toLowerCase().replace(/ /g, "-")}`}
-                        className="text-[14px] text-[#6b7280] hover:text-[#2951D5] transition-colors"
+                      <span
+                        className="text-[14px] text-[#6b7280] hover:text-[#2951D5] transition-colors cursor-pointer"
+                        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                       >
                         {item}
-                      </a>
+                      </span>
                     </li>
                   )
                 )}
@@ -691,24 +691,24 @@ export default function Home() {
               &copy; {new Date().getFullYear()} SmarterSwipe. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
-              <a
-                href="https://smarterswipe.com/privacy-policy"
-                className="text-[12px] text-[#9ca3af] hover:text-[#2951D5] transition-colors"
+              <span
+                className="text-[12px] text-[#9ca3af] hover:text-[#2951D5] transition-colors cursor-pointer"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               >
                 Privacy Policy
-              </a>
-              <a
-                href="https://smarterswipe.com/terms-of-service"
-                className="text-[12px] text-[#9ca3af] hover:text-[#2951D5] transition-colors"
+              </span>
+              <span
+                className="text-[12px] text-[#9ca3af] hover:text-[#2951D5] transition-colors cursor-pointer"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               >
                 Terms of Service
-              </a>
-              <a
-                href="https://smarterswipe.com/funding-disclosures"
-                className="text-[12px] text-[#9ca3af] hover:text-[#2951D5] transition-colors"
+              </span>
+              <span
+                className="text-[12px] text-[#9ca3af] hover:text-[#2951D5] transition-colors cursor-pointer"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               >
                 Funding Disclosures
-              </a>
+              </span>
             </div>
           </div>
         </div>

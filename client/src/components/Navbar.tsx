@@ -52,12 +52,12 @@ export function Navbar() {
 
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
-            <a
-              href="https://smarterswipe.com"
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
               className="px-4 py-2 text-[14px] font-medium text-white/70 hover:text-white transition-colors"
             >
               Home
-            </a>
+            </button>
             <button
               onClick={() => scrollTo("how-it-works")}
               className="px-4 py-2 text-[14px] font-medium text-white/70 hover:text-white transition-colors"
@@ -80,12 +80,12 @@ export function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <a
-              href="https://smarterswipe.com/login"
+            <button
+              onClick={() => scrollTo("form-section")}
               className="px-4 py-2 text-[14px] font-medium text-white/70 hover:text-white transition-colors"
             >
               Client Login
-            </a>
+            </button>
             <button
               onClick={() => scrollTo("form-section")}
               className="btn-gradient"
@@ -108,12 +108,12 @@ export function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-[#0B1120]/98 backdrop-blur-xl border-t border-white/10">
           <div className="px-4 py-4 space-y-1">
-            <a
-              href="https://smarterswipe.com"
-              className="block px-4 py-3 text-[14px] text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+            <button
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="block w-full text-left px-4 py-3 text-[14px] text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
             >
               Home
-            </a>
+            </button>
             <button
               onClick={() => scrollTo("how-it-works")}
               className="block w-full text-left px-4 py-3 text-[14px] text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
