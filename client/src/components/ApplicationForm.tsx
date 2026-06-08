@@ -207,7 +207,7 @@ function clearSession() {
 
 /* ───── Shared input height class ───── */
 const INPUT_CLASS =
-  "w-full h-[48px] px-4 rounded-xl border border-gray-200 bg-white text-[14px] text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/20 focus:border-[#2951D5] transition-all";
+  "w-full h-[50px] px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/20 focus:border-[#2951D5] transition-all shadow-sm";
 
 /* ───── Reusable field components ───── */
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
@@ -382,7 +382,7 @@ function FileUploadField({
 /* ───── Two-column row helper: stacks on mobile ───── */
 function Row2({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">{children}</div>
   );
 }
 
@@ -698,23 +698,36 @@ export function ApplicationForm() {
 
   if (submitted) {
     return (
-      <div className="text-center py-16 px-4">
-        <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={40} className="text-[#22c55e]" />
+      <div className="min-h-screen bg-[#f8f9fc] flex items-center justify-center p-4">
+        <div className="w-full max-w-2xl light-card p-8 sm:p-12 text-center">
+          <div className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 size={40} className="text-[#22c55e]" />
+          </div>
+          <h3 className="text-[24px] font-bold text-[#0B1120] mb-3">
+            Application Submitted
+          </h3>
+          <p className="text-[16px] text-[#6b7280] max-w-md mx-auto">
+            Thank you! Our team will review your application and reach out within
+            24 hours with your pre-approval options.
+          </p>
         </div>
-        <h3 className="text-[24px] font-bold text-[#0B1120] mb-3">
-          Application Submitted
-        </h3>
-        <p className="text-[16px] text-[#6b7280] max-w-md mx-auto">
-          Thank you! Our team will review your application and reach out within
-          24 hours with your pre-approval options.
-        </p>
       </div>
     );
   }
 
   return (
-    <div ref={formTopRef}>
+    <div ref={formTopRef} className="min-h-screen bg-[#f8f9fc] py-6 sm:py-10 px-4">
+      {/* ─── Branded header ─── */}
+      <div className="max-w-4xl mx-auto mb-6 flex items-center justify-center">
+        <img
+          src="/manus-storage/smarterswipe_logo_468640f5.png"
+          alt="SmarterSwipe"
+          className="h-7 w-auto"
+        />
+      </div>
+
+      {/* ─── Form card ─── */}
+      <div className="max-w-4xl mx-auto light-card p-6 sm:p-8 lg:p-10">
       {/* ─── Step indicator ─── */}
       <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
         {STEPS.map((s, i) => {
@@ -769,14 +782,14 @@ export function ApplicationForm() {
       </div>
 
       {/* ─── Step content ─── */}
-      <div className="min-h-[320px]">
+      <div className="min-h-[320px] mt-2">
         {/* STEP 0: Basic Business Info */}
         {step === 0 && (
-          <div className="space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
+          <div className="space-y-5">
+            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
               Basic Business Information
             </h3>
-            <p className="text-[13px] text-[#9ca3af] mb-4">
+            <p className="text-[14px] text-[#9ca3af] mb-5">
               Tell us about your business so we can match you with the right
               options.
             </p>
@@ -892,11 +905,11 @@ export function ApplicationForm() {
 
         {/* STEP 1: Funding Request */}
         {step === 1 && (
-          <div className="space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
+          <div className="space-y-5">
+            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
               Funding Request Details
             </h3>
-            <p className="text-[13px] text-[#9ca3af] mb-4">
+            <p className="text-[14px] text-[#9ca3af] mb-5">
               How much capital do you need and what will you use it for?
             </p>
             <TextInput
@@ -933,11 +946,11 @@ export function ApplicationForm() {
 
         {/* STEP 2: Owner Info */}
         {step === 2 && (
-          <div className="space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
+          <div className="space-y-5">
+            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
               Primary Owner / Principal Information
             </h3>
-            <p className="text-[13px] text-[#9ca3af] mb-4">
+            <p className="text-[14px] text-[#9ca3af] mb-5">
               Information about the primary business owner. If there are
               additional owners with 20%+ ownership, please note that in the
               application.
@@ -1014,11 +1027,11 @@ export function ApplicationForm() {
 
         {/* STEP 3: Financial & Banking */}
         {step === 3 && (
-          <div className="space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
+          <div className="space-y-5">
+            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
               Financial & Banking Information
             </h3>
-            <p className="text-[13px] text-[#9ca3af] mb-4">
+            <p className="text-[14px] text-[#9ca3af] mb-5">
               Your banking details help us verify revenue and process funding.
             </p>
             <Row2>
@@ -1141,11 +1154,11 @@ export function ApplicationForm() {
 
         {/* STEP 4: Merchant / Processing */}
         {step === 4 && (
-          <div className="space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
+          <div className="space-y-5">
+            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
               Merchant / Processing Information
             </h3>
-            <p className="text-[13px] text-[#9ca3af] mb-4">
+            <p className="text-[14px] text-[#9ca3af] mb-5">
               Details about your current payment processing setup.
             </p>
             <TextInput
@@ -1174,10 +1187,10 @@ export function ApplicationForm() {
         {/* STEP 5: Documents — immediate upload */}
         {step === 5 && (
           <div className="space-y-5">
-            <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
+            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
               Required Documents
             </h3>
-            <p className="text-[13px] text-[#9ca3af] mb-4">
+            <p className="text-[14px] text-[#9ca3af] mb-5">
               Please upload the following documents. Accepted formats: PDF, JPG,
               PNG. Files are uploaded immediately and saved securely.
             </p>
@@ -1242,11 +1255,11 @@ export function ApplicationForm() {
 
         {/* STEP 6: Authorization */}
         {step === 6 && (
-          <div className="space-y-4">
-            <h3 className="text-[18px] font-semibold text-[#0B1120] mb-1">
+          <div className="space-y-5">
+            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
               Authorizations & Certifications
             </h3>
-            <p className="text-[13px] text-[#9ca3af] mb-4">
+            <p className="text-[14px] text-[#9ca3af] mb-5">
               Please review and agree to the following before submitting.
             </p>
 
@@ -1332,7 +1345,7 @@ export function ApplicationForm() {
       </div>
 
       {/* ─── Navigation buttons ─── */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-100">
+      <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200">
         {step > 0 ? (
           <button
             onClick={prev}
@@ -1382,6 +1395,15 @@ export function ApplicationForm() {
             )}
           </button>
         )}
+      </div>
+
+      </div>{/* end .light-card */}
+
+      {/* ─── Footer note ─── */}
+      <div className="max-w-4xl mx-auto mt-4 text-center">
+        <p className="text-[12px] text-[#9ca3af]">
+          Secure application • Your information is encrypted and protected
+        </p>
       </div>
     </div>
   );

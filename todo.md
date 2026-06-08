@@ -75,3 +75,5 @@
 - [x] Redesign homepage: remove all landing page content (hero, problem, solution, FAQ, footer, navbar)
 - [x] Homepage should ONLY show the ApplicationForm — form IS the entire page
 - [x] Keep admin side completely unchanged
+- [x] Add branded container/card with borders, padding, and SmarterSwipe branding to the form
+- [x] Improve form spacing and visual hierarchy so it doesn't look cramped
