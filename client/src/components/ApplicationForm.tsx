@@ -731,7 +731,7 @@ export function ApplicationForm() {
       {/* ─── Form card ─── */}
       <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-6 sm:p-10 lg:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_12px_48px_rgba(41,81,213,0.06)]">
       {/* ─── Step indicator ─── */}
-      <div className="flex items-center justify-between mb-10 overflow-x-auto pb-2 px-1">
+      <div className="flex items-center justify-between mb-10 overflow-x-auto overflow-y-visible pb-4 pt-4 px-1">
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const isActive = i === step;
@@ -747,7 +747,7 @@ export function ApplicationForm() {
                 <div
                   className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isActive
-                      ? "bg-gradient-to-br from-[#2951D5] to-[#4361EE] text-white shadow-lg shadow-[#2951D5]/30 ring-4 ring-[#2951D5]/10"
+                      ? "bg-gradient-to-br from-[#2951D5] to-[#4361EE] text-white shadow-[0_0_16px_rgba(41,81,213,0.45),0_0_6px_rgba(41,81,213,0.3)] ring-4 ring-[#2951D5]/15"
                       : isComplete
                       ? "bg-[#22c55e] text-white shadow-sm"
                       : "bg-[#f0f2f5] text-[#b0b5c0]"
