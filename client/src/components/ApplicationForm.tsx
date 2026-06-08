@@ -207,14 +207,14 @@ function clearSession() {
 
 /* ───── Shared input height class ───── */
 const INPUT_CLASS =
-  "w-full h-[50px] px-4 rounded-xl border border-gray-200 bg-white text-[15px] text-[#0B1120] placeholder:text-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#2951D5]/20 focus:border-[#2951D5] transition-all shadow-sm";
+  "w-full h-[52px] px-4 rounded-xl border border-[#e2e6ed] bg-[#fafbfc] text-[15px] text-[#0B1120] placeholder:text-[#b0b5c0] focus:outline-none focus:ring-[3px] focus:ring-[#2951D5]/10 focus:border-[#2951D5] focus:bg-white transition-all duration-200";
 
 /* ───── Reusable field components ───── */
 function FieldLabel({ label, required }: { label: string; required?: boolean }) {
   return (
-    <label className="block text-[13px] font-medium text-[#3a3f4b] mb-1.5">
+    <label className="block text-[13px] font-semibold text-[#2a2f3a] mb-2 tracking-tight">
       {label}
-      {required && <span className="text-red-400 ml-0.5">*</span>}
+      {required && <span className="text-[#2951D5] ml-0.5">*</span>}
     </label>
   );
 }
@@ -315,10 +315,10 @@ function FileUploadField({
       <FieldLabel label={label} required />
       <div
         onClick={() => !uploading && inputRef.current?.click()}
-        className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${
+        className={`border-2 border-dashed rounded-xl p-5 text-center transition-all duration-200 ${
           uploading
-            ? "border-[#2951D5]/30 bg-[#f0f4ff]/30 cursor-wait"
-            : "border-gray-200 cursor-pointer hover:border-[#2951D5]/30 hover:bg-[#f0f4ff]/30"
+            ? "border-[#2951D5]/40 bg-[#f0f4ff]/50 cursor-wait"
+            : "border-[#d4dae6] cursor-pointer hover:border-[#2951D5]/50 hover:bg-[#f8faff] hover:shadow-sm"
         }`}
       >
         <input
@@ -716,20 +716,21 @@ export function ApplicationForm() {
   }
 
   return (
-    <div ref={formTopRef} className="min-h-screen bg-[#f8f9fc] py-6 sm:py-10 px-4">
+    <div ref={formTopRef} className="min-h-screen bg-gradient-to-br from-[#f0f4ff] via-[#f8f9fc] to-[#f5f0ff] py-8 sm:py-12 px-4">
       {/* ─── Branded header ─── */}
-      <div className="max-w-4xl mx-auto mb-6 flex items-center justify-center">
+      <div className="max-w-3xl mx-auto mb-8 flex flex-col items-center">
         <img
           src="/manus-storage/smarterswipe_logo_468640f5.png"
           alt="SmarterSwipe"
-          className="h-7 w-auto"
+          className="h-8 w-auto mb-3"
         />
+        <p className="text-[13px] text-[#6b7280] font-medium tracking-wide uppercase">Business Capital Application</p>
       </div>
 
       {/* ─── Form card ─── */}
-      <div className="max-w-4xl mx-auto light-card p-6 sm:p-8 lg:p-10">
+      <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-6 sm:p-10 lg:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_12px_48px_rgba(41,81,213,0.06)]">
       {/* ─── Step indicator ─── */}
-      <div className="flex items-center justify-between mb-8 overflow-x-auto pb-2">
+      <div className="flex items-center justify-between mb-10 overflow-x-auto pb-2 px-1">
         {STEPS.map((s, i) => {
           const Icon = s.icon;
           const isActive = i === step;
@@ -738,32 +739,32 @@ export function ApplicationForm() {
             <div key={i} className="flex items-center shrink-0">
               <button
                 onClick={() => { if (i <= step) { setStep(i); scrollToFormTop(); } }}
-                className={`flex flex-col items-center gap-1 transition-all ${
+                className={`flex flex-col items-center gap-1.5 transition-all ${
                   i <= step ? "cursor-pointer" : "cursor-default"
-                }`}
+                } ${isActive ? "scale-110" : ""}`}
               >
                 <div
-                  className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                     isActive
-                      ? "bg-[#2951D5] text-white shadow-md shadow-[#2951D5]/20"
+                      ? "bg-gradient-to-br from-[#2951D5] to-[#4361EE] text-white shadow-lg shadow-[#2951D5]/30 ring-4 ring-[#2951D5]/10"
                       : isComplete
-                      ? "bg-[#22c55e] text-white"
-                      : "bg-[#f5f7fa] text-[#9ca3af]"
+                      ? "bg-[#22c55e] text-white shadow-sm"
+                      : "bg-[#f0f2f5] text-[#b0b5c0]"
                   }`}
                 >
                   {isComplete ? (
-                    <CheckCircle2 size={14} />
+                    <CheckCircle2 size={15} />
                   ) : (
-                    <Icon size={14} />
+                    <Icon size={15} />
                   )}
                 </div>
                 <span
-                  className={`text-[9px] sm:text-[10px] font-medium whitespace-nowrap ${
+                  className={`text-[9px] sm:text-[10px] font-semibold whitespace-nowrap tracking-wide ${
                     isActive
                       ? "text-[#2951D5]"
                       : isComplete
                       ? "text-[#22c55e]"
-                      : "text-[#9ca3af]"
+                      : "text-[#b0b5c0]"
                   }`}
                 >
                   {s.label}
@@ -771,8 +772,8 @@ export function ApplicationForm() {
               </button>
               {i < STEPS.length - 1 && (
                 <div
-                  className={`w-3 sm:w-6 md:w-10 lg:w-12 h-0.5 mx-0.5 sm:mx-1 rounded-full shrink-0 ${
-                    i < step ? "bg-[#22c55e]" : "bg-gray-200"
+                  className={`w-3 sm:w-5 md:w-8 lg:w-10 h-[2px] mx-0.5 sm:mx-1 rounded-full shrink-0 transition-all duration-300 ${
+                    i < step ? "bg-[#22c55e]" : "bg-[#e5e7eb]"
                   }`}
                 />
               )}
@@ -786,13 +787,14 @@ export function ApplicationForm() {
         {/* STEP 0: Basic Business Info */}
         {step === 0 && (
           <div className="space-y-5">
-            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
-              Basic Business Information
-            </h3>
-            <p className="text-[14px] text-[#9ca3af] mb-5">
-              Tell us about your business so we can match you with the right
-              options.
-            </p>
+            <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
+              <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
+                Basic Business Information
+              </h3>
+              <p className="text-[14px] text-[#6b7280] mt-1">
+                Tell us about your business so we can match you with the right options.
+              </p>
+            </div>
             <Row2>
               <TextInput
                 label="Legal Business Name"
@@ -906,12 +908,14 @@ export function ApplicationForm() {
         {/* STEP 1: Funding Request */}
         {step === 1 && (
           <div className="space-y-5">
-            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
-              Funding Request Details
-            </h3>
-            <p className="text-[14px] text-[#9ca3af] mb-5">
-              How much capital do you need and what will you use it for?
-            </p>
+            <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
+              <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
+                Funding Request Details
+              </h3>
+              <p className="text-[14px] text-[#6b7280] mt-1">
+                How much capital do you need and what will you use it for?
+              </p>
+            </div>
             <TextInput
               label="Amount Requested ($)"
               value={data.amountRequested}
@@ -947,14 +951,14 @@ export function ApplicationForm() {
         {/* STEP 2: Owner Info */}
         {step === 2 && (
           <div className="space-y-5">
-            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
-              Primary Owner / Principal Information
-            </h3>
-            <p className="text-[14px] text-[#9ca3af] mb-5">
-              Information about the primary business owner. If there are
-              additional owners with 20%+ ownership, please note that in the
-              application.
-            </p>
+            <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
+              <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
+                Primary Owner / Principal Information
+              </h3>
+              <p className="text-[14px] text-[#6b7280] mt-1">
+                Information about the primary business owner. If there are additional owners with 20%+ ownership, please note that in the application.
+              </p>
+            </div>
             <Row2>
               <TextInput
                 label="Full Legal Name"
@@ -1028,12 +1032,14 @@ export function ApplicationForm() {
         {/* STEP 3: Financial & Banking */}
         {step === 3 && (
           <div className="space-y-5">
-            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
-              Financial & Banking Information
-            </h3>
-            <p className="text-[14px] text-[#9ca3af] mb-5">
-              Your banking details help us verify revenue and process funding.
-            </p>
+            <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
+              <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
+                Financial & Banking Information
+              </h3>
+              <p className="text-[14px] text-[#6b7280] mt-1">
+                Your banking details help us verify revenue and process funding.
+              </p>
+            </div>
             <Row2>
               <TextInput
                 label="Primary Business Bank Name"
@@ -1155,12 +1161,14 @@ export function ApplicationForm() {
         {/* STEP 4: Merchant / Processing */}
         {step === 4 && (
           <div className="space-y-5">
-            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
-              Merchant / Processing Information
-            </h3>
-            <p className="text-[14px] text-[#9ca3af] mb-5">
-              Details about your current payment processing setup.
-            </p>
+            <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
+              <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
+                Merchant / Processing Information
+              </h3>
+              <p className="text-[14px] text-[#6b7280] mt-1">
+                Details about your current payment processing setup.
+              </p>
+            </div>
             <TextInput
               label="Primary Processor"
               value={data.primaryProcessor}
@@ -1187,13 +1195,14 @@ export function ApplicationForm() {
         {/* STEP 5: Documents — immediate upload */}
         {step === 5 && (
           <div className="space-y-5">
-            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
-              Required Documents
-            </h3>
-            <p className="text-[14px] text-[#9ca3af] mb-5">
-              Please upload the following documents. Accepted formats: PDF, JPG,
-              PNG. Files are uploaded immediately and saved securely.
-            </p>
+            <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
+              <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
+                Required Documents
+              </h3>
+              <p className="text-[14px] text-[#6b7280] mt-1">
+                Please upload the following documents. Accepted formats: PDF, JPG, PNG. Files are uploaded immediately and saved securely.
+              </p>
+            </div>
             <FileUploadField
               label="Driver's License or State ID (Front & Back)"
               uploadedFiles={driversLicenseDocs}
@@ -1256,12 +1265,14 @@ export function ApplicationForm() {
         {/* STEP 6: Authorization */}
         {step === 6 && (
           <div className="space-y-5">
-            <h3 className="text-[20px] font-semibold text-[#0B1120] mb-1">
-              Authorizations & Certifications
-            </h3>
-            <p className="text-[14px] text-[#9ca3af] mb-5">
-              Please review and agree to the following before submitting.
-            </p>
+            <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
+              <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
+                Authorizations & Certifications
+              </h3>
+              <p className="text-[14px] text-[#6b7280] mt-1">
+                Please review and agree to the following before submitting.
+              </p>
+            </div>
 
             <div className="bg-[#f8f9fc] rounded-xl p-4 sm:p-5 text-[13px] leading-[20px] text-[#6b7280] max-h-48 overflow-y-auto border border-gray-100">
               <p className="mb-3">
@@ -1345,11 +1356,11 @@ export function ApplicationForm() {
       </div>
 
       {/* ─── Navigation buttons ─── */}
-      <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200">
+      <div className="flex items-center justify-between mt-10 pt-8 border-t border-[#e5e7eb]">
         {step > 0 ? (
           <button
             onClick={prev}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-[14px] font-medium text-[#6b7280] hover:text-[#0B1120] hover:bg-[#f5f7fa] transition-all"
+            className="flex items-center gap-2 px-5 py-3 rounded-xl text-[14px] font-semibold text-[#6b7280] hover:text-[#0B1120] hover:bg-[#f0f2f5] border border-transparent hover:border-[#e2e6ed] transition-all duration-200"
           >
             <ArrowLeft size={16} />
             Back
@@ -1362,7 +1373,7 @@ export function ApplicationForm() {
           <button
             onClick={next}
             disabled={isAnyUploading}
-            className="btn-primary !py-3 !px-6 !text-[14px] disabled:opacity-60"
+            className="flex items-center gap-2 px-7 py-3.5 rounded-xl text-[14px] font-semibold text-white bg-gradient-to-r from-[#2951D5] to-[#4361EE] hover:from-[#2344B8] hover:to-[#3854D9] shadow-md shadow-[#2951D5]/20 hover:shadow-lg hover:shadow-[#2951D5]/30 transition-all duration-200 disabled:opacity-60 disabled:shadow-none"
           >
             {isAnyUploading ? (
               <>
@@ -1380,7 +1391,7 @@ export function ApplicationForm() {
           <button
             onClick={handleSubmit}
             disabled={submitting || isAnyUploading}
-            className="btn-primary !py-3 !px-6 sm:!px-8 !text-[14px] disabled:opacity-60"
+            className="flex items-center gap-2 px-8 py-3.5 rounded-xl text-[14px] font-semibold text-white bg-gradient-to-r from-[#2951D5] to-[#4361EE] hover:from-[#2344B8] hover:to-[#3854D9] shadow-md shadow-[#2951D5]/20 hover:shadow-lg hover:shadow-[#2951D5]/30 transition-all duration-200 disabled:opacity-60 disabled:shadow-none"
           >
             {submitting ? (
               <>
@@ -1397,12 +1408,19 @@ export function ApplicationForm() {
         )}
       </div>
 
-      </div>{/* end .light-card */}
+      </div>{/* end form card */}
 
       {/* ─── Footer note ─── */}
-      <div className="max-w-4xl mx-auto mt-4 text-center">
-        <p className="text-[12px] text-[#9ca3af]">
-          Secure application • Your information is encrypted and protected
+      <div className="max-w-3xl mx-auto mt-6 flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2 text-[12px] text-[#9ca3af]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#22c55e]">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>256-bit SSL encrypted • Your data is secure and private</span>
+        </div>
+        <p className="text-[11px] text-[#c4c9d4]">
+          © {new Date().getFullYear()} SmarterSwipe. All rights reserved.
         </p>
       </div>
     </div>

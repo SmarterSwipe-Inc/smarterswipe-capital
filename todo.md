@@ -77,3 +77,4 @@
 - [x] Keep admin side completely unchanged
 - [x] Add branded container/card with borders, padding, and SmarterSwipe branding to the form
 - [x] Improve form spacing and visual hierarchy so it doesn't look cramped
+- [x] Premium design upgrade: elevated card, refined typography, subtle gradients, polished micro-interactions
