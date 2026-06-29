@@ -28,6 +28,9 @@ import {
   X,
   Loader2,
   AlertCircle,
+  Plus,
+  Trash2,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -81,6 +84,29 @@ interface FormData {
   signatureName: string;
   signatureTitle: string;
 }
+
+/** Represents an additional owner/partner */
+interface AdditionalOwner {
+  fullName: string;
+  title: string;
+  ownershipPercent: string;
+  dob: string;
+  ssn: string;
+  phone: string;
+  email: string;
+  address: string;
+}
+
+const emptyOwner: AdditionalOwner = {
+  fullName: "",
+  title: "",
+  ownershipPercent: "",
+  dob: "",
+  ssn: "",
+  phone: "",
+  email: "",
+  address: "",
+};
 
 /** Represents a file that has been uploaded to S3 */
 interface UploadedFile {
@@ -159,6 +185,7 @@ const STEPS = [
 const STORAGE_KEY_FORM = "ss_app_form_data";
 const STORAGE_KEY_STEP = "ss_app_form_step";
 const STORAGE_KEY_DOCS = "ss_app_uploaded_docs";
+const STORAGE_KEY_OWNERS = "ss_app_additional_owners";
 const ACCEPTED_FILE_TYPES = ".pdf,.jpg,.jpeg,.png";
 
 /** Fields that contain sensitive PII — never persisted to sessionStorage */
@@ -201,6 +228,7 @@ function clearSession() {
     sessionStorage.removeItem(STORAGE_KEY_FORM);
     sessionStorage.removeItem(STORAGE_KEY_STEP);
     sessionStorage.removeItem(STORAGE_KEY_DOCS);
+    sessionStorage.removeItem(STORAGE_KEY_OWNERS);
   } catch {
     /* ignore */
   }
@@ -450,6 +478,11 @@ export function ApplicationForm() {
     () => loadFromSession<UploadedFile[]>(STORAGE_KEY_DOCS, []).filter((d: any) => d._cat === "ad").map(({ _cat, ...rest }: any) => rest)
   );
 
+  // Additional owners/partners
+  const [additionalOwners, setAdditionalOwners] = useState<AdditionalOwner[]>(
+    () => loadFromSession<AdditionalOwner[]>(STORAGE_KEY_OWNERS, [])
+  );
+
   // Per-category uploading state
   const [uploadingDL, setUploadingDL] = useState(false);
   const [uploadingVC, setUploadingVC] = useState(false);
@@ -472,6 +505,12 @@ export function ApplicationForm() {
   useEffect(() => {
     saveToSession(STORAGE_KEY_STEP, step);
   }, [step]);
+
+  // Persist additional owners to sessionStorage (strip SSN for security)
+  useEffect(() => {
+    const sanitizedOwners = additionalOwners.map((o) => ({ ...o, ssn: "" }));
+    saveToSession(STORAGE_KEY_OWNERS, sanitizedOwners);
+  }, [additionalOwners]);
 
   // Persist uploaded docs to sessionStorage (with category tags for restoration)
   useEffect(() => {
@@ -661,6 +700,20 @@ export function ApplicationForm() {
       ownerPhone: data.ownerPhone,
       ownerEmail: data.ownerEmail,
       ownerHomeAddress: data.ownerAddress,
+
+      // Additional Owners/Partners
+      additionalOwners: additionalOwners.length > 0
+        ? additionalOwners.map((o) => ({
+            fullName: o.fullName,
+            title: o.title,
+            ownershipPercent: o.ownershipPercent,
+            dob: o.dob,
+            ssn: o.ssn,
+            phone: o.phone,
+            email: o.email,
+            address: o.address,
+          }))
+        : undefined,
 
       // Step 4: Financial & Banking
       bankName: data.bankName,
@@ -954,79 +1007,191 @@ export function ApplicationForm() {
           <div className="space-y-5">
             <div className="border-l-[3px] border-[#2951D5] pl-4 mb-2">
               <h3 className="text-[22px] font-bold text-[#0B1120] tracking-tight">
-                Primary Owner / Principal Information
+                Owner / Principal Information
               </h3>
               <p className="text-[14px] text-[#6b7280] mt-1">
-                Information about the primary business owner. If there are additional owners with 20%+ ownership, please note that in the application.
+                Information about the primary business owner. You can add additional owners/partners below.
               </p>
             </div>
-            <Row2>
-              <TextInput
-                label="Full Legal Name"
-                value={data.ownerFullName}
-                onChange={(v) => update("ownerFullName", v)}
-                placeholder="John Smith"
-                required
-              />
-              <TextInput
-                label="Title / Position"
-                value={data.ownerTitle}
-                onChange={(v) => update("ownerTitle", v)}
-                placeholder="Owner / CEO"
-                required
-              />
-            </Row2>
-            <Row2>
-              <TextInput
-                label="% Ownership"
-                value={data.ownershipPercent}
-                onChange={(v) => update("ownershipPercent", v)}
-                placeholder="e.g. 100"
-                required
-              />
-              <TextInput
-                label="Date of Birth"
-                value={data.ownerDob}
-                onChange={(v) => update("ownerDob", v)}
-                placeholder="MM/DD/YYYY"
-                required
-              />
-            </Row2>
-            <TextInput
-              label="Social Security Number (SSN)"
-              value={data.ownerSsn}
-              onChange={(v) => update("ownerSsn", v)}
-              placeholder="XXX-XX-XXXX"
-              required
-            />
+
+            {/* Primary Owner */}
+            <div className="bg-[#f8faff] rounded-xl p-5 border border-[#e2e6ed]">
+              <div className="flex items-center gap-2 mb-4">
+                <User size={16} className="text-[#2951D5]" />
+                <span className="text-[14px] font-semibold text-[#0B1120]">Primary Owner</span>
+              </div>
+              <div className="space-y-4">
+                <Row2>
+                  <TextInput
+                    label="Full Legal Name"
+                    value={data.ownerFullName}
+                    onChange={(v) => update("ownerFullName", v)}
+                    placeholder="John Smith"
+                    required
+                  />
+                  <TextInput
+                    label="Title / Position"
+                    value={data.ownerTitle}
+                    onChange={(v) => update("ownerTitle", v)}
+                    placeholder="Owner / CEO"
+                    required
+                  />
+                </Row2>
+                <Row2>
+                  <TextInput
+                    label="% Ownership"
+                    value={data.ownershipPercent}
+                    onChange={(v) => update("ownershipPercent", v)}
+                    placeholder="e.g. 100"
+                    required
+                  />
+                  <TextInput
+                    label="Date of Birth"
+                    value={data.ownerDob}
+                    onChange={(v) => update("ownerDob", v)}
+                    placeholder="MM/DD/YYYY"
+                    required
+                  />
+                </Row2>
+                <TextInput
+                  label="Social Security Number (SSN)"
+                  value={data.ownerSsn}
+                  onChange={(v) => update("ownerSsn", v)}
+                  placeholder="XXX-XX-XXXX"
+                  required
+                />
+                <p className="text-[12px] text-[#9ca3af] -mt-2">
+                  Required for credit review. Your data is encrypted and secure.
+                </p>
+                <Row2>
+                  <TextInput
+                    label="Personal Phone"
+                    value={data.ownerPhone}
+                    onChange={(v) => update("ownerPhone", v)}
+                    placeholder="(555) 987-6543"
+                    type="tel"
+                    required
+                  />
+                  <TextInput
+                    label="Personal Email"
+                    value={data.ownerEmail}
+                    onChange={(v) => update("ownerEmail", v)}
+                    placeholder="john@email.com"
+                    type="email"
+                    required
+                  />
+                </Row2>
+                <TextInput
+                  label="Home Address"
+                  value={data.ownerAddress}
+                  onChange={(v) => update("ownerAddress", v)}
+                  placeholder="456 Oak Ave, City, State ZIP"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Additional Owners */}
+            {additionalOwners.map((owner, idx) => (
+              <div key={idx} className="bg-[#fafbfc] rounded-xl p-5 border border-[#e2e6ed] relative">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} className="text-[#6b7280]" />
+                    <span className="text-[14px] font-semibold text-[#0B1120]">Additional Owner {idx + 1}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAdditionalOwners((prev) => prev.filter((_, i) => i !== idx))}
+                    className="flex items-center gap-1.5 text-[12px] text-red-500 hover:text-red-700 font-medium transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    Remove
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <Row2>
+                    <TextInput
+                      label="Full Legal Name"
+                      value={owner.fullName}
+                      onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, fullName: v } : o))}
+                      placeholder="Jane Doe"
+                      required
+                    />
+                    <TextInput
+                      label="Title / Position"
+                      value={owner.title}
+                      onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, title: v } : o))}
+                      placeholder="Partner / VP"
+                      required
+                    />
+                  </Row2>
+                  <Row2>
+                    <TextInput
+                      label="% Ownership"
+                      value={owner.ownershipPercent}
+                      onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, ownershipPercent: v } : o))}
+                      placeholder="e.g. 25"
+                      required
+                    />
+                    <TextInput
+                      label="Date of Birth"
+                      value={owner.dob}
+                      onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, dob: v } : o))}
+                      placeholder="MM/DD/YYYY"
+                      required
+                    />
+                  </Row2>
+                  <TextInput
+                    label="Social Security Number (SSN)"
+                    value={owner.ssn}
+                    onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, ssn: v } : o))}
+                    placeholder="XXX-XX-XXXX"
+                    required
+                  />
+                  <p className="text-[12px] text-[#9ca3af] -mt-2">
+                    Required for credit review. Your data is encrypted and secure.
+                  </p>
+                  <Row2>
+                    <TextInput
+                      label="Personal Phone"
+                      value={owner.phone}
+                      onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, phone: v } : o))}
+                      placeholder="(555) 987-6543"
+                      type="tel"
+                      required
+                    />
+                    <TextInput
+                      label="Personal Email"
+                      value={owner.email}
+                      onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, email: v } : o))}
+                      placeholder="jane@email.com"
+                      type="email"
+                      required
+                    />
+                  </Row2>
+                  <TextInput
+                    label="Home Address"
+                    value={owner.address}
+                    onChange={(v) => setAdditionalOwners((prev) => prev.map((o, i) => i === idx ? { ...o, address: v } : o))}
+                    placeholder="789 Elm St, City, State ZIP"
+                    required
+                  />
+                </div>
+              </div>
+            ))}
+
+            {/* Add Owner Button */}
+            <button
+              type="button"
+              onClick={() => setAdditionalOwners((prev) => [...prev, { ...emptyOwner }])}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-dashed border-[#d4dae6] text-[14px] font-semibold text-[#6b7280] hover:border-[#2951D5]/50 hover:text-[#2951D5] hover:bg-[#f8faff] transition-all duration-200"
+            >
+              <Plus size={18} />
+              Add Another Owner / Partner
+            </button>
             <p className="text-[12px] text-[#9ca3af] -mt-2">
-              Required for credit review. Your data is encrypted and secure.
+              Add any additional owners or partners with 20%+ ownership in the business.
             </p>
-            <Row2>
-              <TextInput
-                label="Personal Phone"
-                value={data.ownerPhone}
-                onChange={(v) => update("ownerPhone", v)}
-                placeholder="(555) 987-6543"
-                type="tel"
-                required
-              />
-              <TextInput
-                label="Personal Email"
-                value={data.ownerEmail}
-                onChange={(v) => update("ownerEmail", v)}
-                placeholder="john@email.com"
-                type="email"
-                required
-              />
-            </Row2>
-            <TextInput
-              label="Home Address"
-              value={data.ownerAddress}
-              onChange={(v) => update("ownerAddress", v)}
-              placeholder="456 Oak Ave, City, State ZIP"
-              required
-            />
           </div>
         )}
 

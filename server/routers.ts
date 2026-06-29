@@ -240,6 +240,18 @@ export const appRouter = router({
           ownerEmail: z.string().optional(),
           ownerHomeAddress: z.string().optional(),
 
+          // Additional Owners/Partners (array of objects)
+          additionalOwners: z.array(z.object({
+            fullName: z.string().optional(),
+            title: z.string().optional(),
+            ownershipPercent: z.string().optional(),
+            dob: z.string().optional(),
+            ssn: z.string().optional(),
+            phone: z.string().optional(),
+            email: z.string().optional(),
+            address: z.string().optional(),
+          })).optional(),
+
           // Step 4: Financial & Banking
           bankName: z.string().optional(),
           accountType: z.string().optional(),
@@ -312,6 +324,7 @@ export const appRouter = router({
             ownerPhone: truncate(input.ownerPhone, 32),
             ownerEmail: truncate(input.ownerEmail, 320),
             ownerHomeAddress: input.ownerHomeAddress, // text — no limit
+            additionalOwners: input.additionalOwners && input.additionalOwners.length > 0 ? input.additionalOwners : null,
             bankName: truncate(input.bankName, 255),
             accountType: truncate(input.accountType, 32),
             accountNumber: truncate(input.accountNumber, 64),

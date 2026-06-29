@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, email, name FROM admin_credentials WHERE email = 'jonah@smarterswipe.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3NshuH8nWTqH6Uk.4a2e1c901557 --database bg682ZZYSf7zZ2GPuGAVzn --execute SELECT id, email, name FROM admin_credentials WHERE email = 'jonah@smarterswipe.com';",
+  "rows": [
+    {
+      "id": "1",
+      "email": "jonah@smarterswipe.com",
+      "name": "Jonah"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\n1\tjonah@smarterswipe.com\tJonah\n",
+  "stderr": "",
+  "execution_time_ms": 260
+}

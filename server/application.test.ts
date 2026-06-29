@@ -218,6 +218,67 @@ describe("application.submit", () => {
     expect(result.emailSent).toBe(false);
   });
 
+  it("accepts additionalOwners array and passes it to createApplication", async () => {
+    const { createApplication } = await import("./db");
+    (createApplication as ReturnType<typeof vi.fn>).mockClear();
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.application.submit({
+      legalBusinessName: "Multi Owner LLC",
+      ownerFirstName: "Alice",
+      ownerLastName: "Primary",
+      ownerEmail: "alice@multiowner.com",
+      additionalOwners: [
+        {
+          fullName: "Bob Partner",
+          title: "VP Operations",
+          ownershipPercent: "30",
+          dob: "05/15/1985",
+          ssn: "987-65-4321",
+          phone: "(555) 222-3333",
+          email: "bob@multiowner.com",
+          address: "789 Elm St, City, ST 12345",
+        },
+        {
+          fullName: "Carol Silent",
+          title: "Investor",
+          ownershipPercent: "20",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        additionalOwners: [
+          expect.objectContaining({ fullName: "Bob Partner", ownershipPercent: "30" }),
+          expect.objectContaining({ fullName: "Carol Silent", ownershipPercent: "20" }),
+        ],
+      })
+    );
+  });
+
+  it("passes null for additionalOwners when empty array is provided", async () => {
+    const { createApplication } = await import("./db");
+    (createApplication as ReturnType<typeof vi.fn>).mockClear();
+
+    const ctx = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await caller.application.submit({
+      legalBusinessName: "Solo Owner LLC",
+      additionalOwners: [],
+    });
+
+    expect(createApplication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        additionalOwners: null,
+      })
+    );
+  });
+
   it("still succeeds when email send fails", async () => {
     const { sendEmail } = await import("./email");
     (sendEmail as ReturnType<typeof vi.fn>).mockClear();

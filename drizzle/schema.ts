@@ -57,6 +57,18 @@ export const applications = mysqlTable("applications", {
   ownerEmail: varchar("ownerEmail", { length: 320 }),
   ownerHomeAddress: text("ownerHomeAddress"),
 
+  /* ── Additional Owners/Partners (stored as JSON array) ── */
+  additionalOwners: json("additionalOwners").$type<Array<{
+    fullName?: string;
+    title?: string;
+    ownershipPercent?: string;
+    dob?: string;
+    ssn?: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+  }> | null>(),
+
   /* ── Step 4: Financial & Banking ── */
   bankName: varchar("bankName", { length: 255 }),
   accountType: varchar("accountType", { length: 32 }),

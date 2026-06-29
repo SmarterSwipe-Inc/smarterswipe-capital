@@ -78,3 +78,6 @@
 - [x] Add branded container/card with borders, padding, and SmarterSwipe branding to the form
 - [x] Improve form spacing and visual hierarchy so it doesn't look cramped
 - [x] Premium design upgrade: elevated card, refined typography, subtle gradients, polished micro-interactions
+- [x] Reset Jonah's admin password to smarterswipe1234!
+- [x] Add multi-owner/partner support to application form (add/remove additional owners with their details)
+- [x] Update backend/schema to store multiple owners per application

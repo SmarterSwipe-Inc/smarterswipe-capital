@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE admin_credentials SET passwordHash = '$2b$12$ErZ0DWFPySJQp71i1smGh.XK.ITbeAaCi24Z2C0aACNrn6pDRLmUO' WHERE email = 'jonah@smarterswipe.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3NshuH8nWTqH6Uk.4a2e1c901557 --database bg682ZZYSf7zZ2GPuGAVzn --execute UPDATE admin_credentials SET passwordHash = '$2b$12$ErZ0DWFPySJQp71i1smGh.XK.ITbeAaCi24Z2C0aACNrn6pDRLmUO' WHERE email = 'jonah@smarterswipe.com';",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 261
+}

@@ -311,6 +311,32 @@ function ApplicationDetail({ id, onBack }: { id: number; onBack: () => void }) {
           </div>
         </div>
 
+        {/* Additional Owners/Partners */}
+        {app.additionalOwners && app.additionalOwners.length > 0 && (
+          <div className="light-card p-6">
+            <h3 className="text-sm font-semibold text-[#9ca3af] uppercase tracking-wider mb-4">
+              Additional Owners / Partners
+            </h3>
+            <div className="space-y-5">
+              {app.additionalOwners.map((owner, idx) => (
+                <div key={idx} className="border border-gray-100 rounded-lg p-4 bg-[#fafbfc]">
+                  <p className="text-xs font-semibold text-[#6b7280] uppercase mb-3">Owner {idx + 2}</p>
+                  <div className="space-y-2">
+                    <DetailRow label="Name" value={owner.fullName} />
+                    <DetailRow label="Title" value={owner.title} />
+                    <DetailRow label="Ownership %" value={owner.ownershipPercent} />
+                    <MaskedField label="SSN" value={owner.ssn} visibleChars={4} />
+                    <DetailRow label="Date of Birth" value={owner.dob} />
+                    <DetailRow label="Phone" value={owner.phone} />
+                    <DetailRow label="Email" value={owner.email} />
+                    <DetailRow label="Home Address" value={owner.address} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Funding Request */}
         <div className="light-card p-6">
           <h3 className="text-sm font-semibold text-[#9ca3af] uppercase tracking-wider mb-4">
