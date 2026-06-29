@@ -784,43 +784,77 @@ export function ApplicationForm() {
       {/* ─── Form card ─── */}
       <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-6 sm:p-10 lg:p-12 shadow-[0_4px_24px_rgba(0,0,0,0.04),0_12px_48px_rgba(41,81,213,0.06)] overflow-visible">
       {/* ─── Step indicator ─── */}
-      <div className="mb-8 sm:mb-10 pb-2 sm:pb-4 pt-4">
-        <div className="flex items-center justify-between px-0 sm:px-6">
+      {/* Mobile: compact progress bar with step label */}
+      <div className="sm:hidden mb-6 pt-2">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[13px] font-semibold text-[#0B1120]">
+            {STEPS[step].label}
+          </span>
+          <span className="text-[12px] text-[#9ca3af] font-medium">
+            Step {step + 1} of {STEPS.length}
+          </span>
+        </div>
+        <div className="w-full h-[6px] bg-[#f0f2f5] rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-[#2951D5] to-[#4361EE] rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+          />
+        </div>
+        {/* Step dots for quick navigation */}
+        <div className="flex items-center justify-center gap-2 mt-3">
+          {STEPS.map((s, i) => {
+            const isActive = i === step;
+            const isComplete = i < step;
+            return (
+              <button
+                key={i}
+                onClick={() => { if (i <= step) { setStep(i); scrollToFormTop(); } }}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  isActive
+                    ? "bg-[#2951D5] scale-125 shadow-[0_0_6px_rgba(41,81,213,0.4)]"
+                    : isComplete
+                    ? "bg-[#22c55e]"
+                    : "bg-[#e0e2e7]"
+                } ${i <= step ? "cursor-pointer" : "cursor-default"}`}
+                aria-label={`Step ${i + 1}: ${s.label}`}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop/Tablet: full icon stepper */}
+      <div className="hidden sm:block mb-10 pb-4 pt-4">
+        <div className="flex items-center justify-between px-6">
           {STEPS.map((s, i) => {
             const Icon = s.icon;
             const isActive = i === step;
             const isComplete = i < step;
             return (
-              <div key={i} className="flex items-center">
+              <div key={i} className="flex items-center flex-1 last:flex-none">
                 <button
                   onClick={() => { if (i <= step) { setStep(i); scrollToFormTop(); } }}
-                  className={`flex flex-col items-center gap-1 sm:gap-1.5 transition-all relative z-10 ${
+                  className={`flex flex-col items-center gap-1.5 transition-all relative z-10 ${
                     i <= step ? "cursor-pointer" : "cursor-default"
-                  } ${isActive ? "scale-105 sm:scale-110" : ""}`}
+                  } ${isActive ? "scale-110" : ""}`}
                 >
                   <div
-                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 ${
                       isActive
-                        ? "bg-gradient-to-br from-[#2951D5] to-[#4361EE] text-white shadow-[0_0_12px_rgba(41,81,213,0.4)] ring-2 sm:ring-4 ring-[#2951D5]/15"
+                        ? "bg-gradient-to-br from-[#2951D5] to-[#4361EE] text-white shadow-[0_0_16px_rgba(41,81,213,0.45),0_0_6px_rgba(41,81,213,0.3)] ring-4 ring-[#2951D5]/15"
                         : isComplete
                         ? "bg-[#22c55e] text-white shadow-sm"
                         : "bg-[#f0f2f5] text-[#b0b5c0]"
                     }`}
                   >
                     {isComplete ? (
-                      <CheckCircle2 size={14} className="sm:hidden" />
+                      <CheckCircle2 size={15} />
                     ) : (
-                      <Icon size={14} className="sm:hidden" />
-                    )}
-                    {isComplete ? (
-                      <CheckCircle2 size={15} className="hidden sm:block" />
-                    ) : (
-                      <Icon size={15} className="hidden sm:block" />
+                      <Icon size={15} />
                     )}
                   </div>
-                  {/* Labels hidden on mobile, shown on sm+ */}
                   <span
-                    className={`hidden sm:block text-[10px] font-semibold whitespace-nowrap tracking-wide ${
+                    className={`text-[10px] font-semibold whitespace-nowrap tracking-wide ${
                       isActive
                         ? "text-[#2951D5]"
                         : isComplete
@@ -830,16 +864,10 @@ export function ApplicationForm() {
                   >
                     {s.label}
                   </span>
-                  {/* On mobile, show label only for active step */}
-                  {isActive && (
-                    <span className="sm:hidden text-[8px] font-semibold text-[#2951D5] whitespace-nowrap">
-                      {s.label}
-                    </span>
-                  )}
                 </button>
                 {i < STEPS.length - 1 && (
                   <div
-                    className={`w-3 sm:w-5 md:w-8 lg:w-10 h-[2px] mx-[1px] sm:mx-1 rounded-full shrink-0 transition-all duration-300 z-0 ${
+                    className={`w-5 md:w-8 lg:w-10 h-[2px] mx-1.5 rounded-full shrink-0 transition-all duration-300 z-0 ${
                       i < step ? "bg-[#22c55e]" : "bg-[#e5e7eb]"
                     }`}
                   />
