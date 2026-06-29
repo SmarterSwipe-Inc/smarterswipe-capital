@@ -81,3 +81,4 @@
 - [x] Reset Jonah's admin password to smarterswipe1234!
 - [x] Add multi-owner/partner support to application form (add/remove additional owners with their details)
 - [x] Update backend/schema to store multiple owners per application
+- [x] Fix mobile view: step indicators getting cut off, improve responsive layout of form stepper
